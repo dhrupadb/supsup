@@ -1,5 +1,6 @@
 from copy import deepcopy
-from multiprocessing import Process, Queue from itertools import product
+from multiprocessing import Process, Queue
+from itertools import product
 import sys, os
 import numpy as np
 import time
