@@ -2,8 +2,7 @@ import torch
 import torch.nn as nn
 import torch.autograd as autograd
 
-import math
-
+import math 
 
 def mask_init(module):
     scores = torch.Tensor(module.weight.size())

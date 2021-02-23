@@ -24,14 +24,20 @@ from collections import defaultdict
 
 def main():
     if args.seed is not None:
-        random.seed(args.seed)
-        torch.manual_seed(args.seed)
-        torch.cuda.manual_seed(args.seed)
-        torch.cuda.manual_seed_all(args.seed)
+        random.seed(int(args.seed))  # Python random module.
+        torch.manual_seed(int(args.seed))
+        torch.cuda.manual_seed(int(args.seed))
+        torch.cuda.manual_seed_all(int(args.seed))  # if you are using multi-GPU.
+        np.random.seed(int(args.seed))  # Numpy module.
+        torch.backends.cudnn.benchmark = False
+        torch.backends.cudnn.deterministic = True
 
     # Make the a directory corresponding to this run for saving results, checkpoints etc.
     i = 0
     while True:
+        # AT comments
+        # getting PermissionError: [Errno 13] Permission denied: '/path'
+        # run_base_dir = "./at_results"
         run_base_dir = pathlib.Path(f"{args.log_dir}/{args.name}~try={str(i)}")
 
         if not run_base_dir.exists():
@@ -50,9 +56,9 @@ def main():
 
     # Track accuracy on all tasks.
     if args.num_tasks:
-        best_acc1 = [0.0 for _ in range(args.num_tasks)]
-        curr_acc1 = [0.0 for _ in range(args.num_tasks)]
-        adapt_acc1 = [0.0 for _ in range(args.num_tasks)]
+        best_acc1 = [0.0]*args.num_tasks
+        curr_acc1 = [0.0]*args.num_tasks
+        adapt_acc1 = [0.0]*args.num_tasks
 
     # Get the model.
     model = utils.get_model()
@@ -90,8 +96,12 @@ def main():
             pretrained_dict = {
                 k: v for k, v in pretrained_dict.items() if k in model_dict
             }
+
             model_dict.update(pretrained_dict)
-            model.load_state_dict(pretrained_dict)
+            model.load_state_dict(model_dict)
+
+#            model_dict.update(pretrained_dict)
+#            model.load_state_dict(pretrained_dict)
 
             print(f"=> Loaded checkpoint '{args.resume}' (epoch {checkpoint['epoch']})")
         else:
@@ -159,6 +169,15 @@ def main():
 
             if curr_acc1 > best_acc1:
                 best_acc1 = curr_acc1
+
+        curr_acc1 = test(
+            model,
+            writer,
+            criterion,
+            data_loader.val_loader,
+            args.epochs,
+            task_idx=args.task_eval,
+        )
 
         utils.write_result_to_csv(
             name=f"{args.name}~set={args.set}~task={args.task_eval}",
@@ -228,6 +247,7 @@ def main():
             else args.lr
         )
 
+
         # get optimizer, scheduler
         if args.optimizer == "adam":
             optimizer = optim.Adam(params, lr=lr, weight_decay=args.wd)
@@ -237,7 +257,7 @@ def main():
             optimizer = optim.SGD(
                 params, lr=lr, momentum=args.momentum, weight_decay=args.wd
             )
-        
+
         train_epochs = args.epochs
 
         if args.no_scheduler:
@@ -359,10 +379,9 @@ def main():
             writer.add_scalar(
                 "adapt/avg_acc", avg_acc / num_tasks_learned, num_tasks_learned
             )
-            
+
             utils.clear_masks(model)
             torch.cuda.empty_cache()
-
 
     if args.save:
         torch.save(

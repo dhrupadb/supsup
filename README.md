@@ -19,7 +19,7 @@ We have added `mnist.ipynb` as a self-contained example of the GG and GNs scenar
     - `gemresnet.py` contains a smaller version of ResNet-20 used in the GG SplitCIFAR100 experiments.
     - `resnet.py` contains the standard ResNet architecures for our GG SplitImageNet experiments.
     - `modules.py` contains layers used in our experiments. In particular, we use `FastMultitaskMaskConv` for GNu and NNs experiments and `MultitaskMaskConv` for GG experiments.
-- `trainers/` contains model trainers for different scenarios. 
+- `trainers/` contains model trainers for different scenarios.
     - `default.py` is a simple classification setup, used for GG, GNu, and GNs
     - `nns.py` is used for the NNs scenario
     - `reinit.py` is used for the Transfer experiment in Figure 3 (right).
@@ -57,7 +57,7 @@ Go to the root directory of this code repository and invoke one of the scripts f
 python experiments/GG/splitcifar100/rn18-supsup.py --gpu-sets="0|1|2|3" --data=/path/to/dataset/parent --seeds 1
 ```
 
-The `--data` flag is the path to the folder which contains the required dataset, in this case CIFAR100 or ImageNet, which we then split into tasks. CIFAR100 will be automatically downloaded if it's not in `--data`, ImageNet will not. `--seeds` says how many seeds (from 0 to `--seeds - 1` to evaluate on. For all of our reported SplitCIFAR100 experiments we use 5. Our reported experiments for SplitImageNet are with 1 seed (with fixed ImageNet split). The default number of seeds in this repo is 1. 
+The `--data` flag is the path to the folder which contains the required dataset, in this case CIFAR100 or ImageNet, which we then split into tasks. CIFAR100 will be automatically downloaded if it's not in `--data`, ImageNet will not. `--seeds` says how many seeds (from 0 to `--seeds - 1` to evaluate on. For all of our reported SplitCIFAR100 experiments we use 5. Our reported experiments for SplitImageNet are with 1 seed (with fixed ImageNet split). The default number of seeds in this repo is 1.
 
 Since we are in the GG scenario, these models can be trained on each task individually. As such these scripts are built to take advantage of parallelism. The `--gpu-sets` command takes comma-separated sets of GPUs separated by `|`. For example, `--gpu-sets="0|1|2|3"` means that each experiment will be run individually on a GPU with ID in [0, 1, 2, 3]. If you want to use multiple GPUs per experiment, say for ResNet-50 on SplitImagenet, you can specify this by using comma-separated lists. For example, `--gpu-sets="0,1|2,3"` means that each task will be trained invidually (in parallel) either on GPUs {0, 1} or {2, 3}. Specifying a lone gpu, `--gpu-sets=0`, means that experiments will be run sequentially on GPU 0.
 
@@ -82,3 +82,63 @@ python experiments/GNu/MNISTPerm/LeNet-2500-tasks/supsup_h.py
 ```
 where `args.data` should point to a directory containing the dataset and checkpoints/results will be logged at `args.log_dir`.
 These can be changed in the python file. The ablations can be reproduced by e.g. changing output size.
+
+
+
+
+### Amber's Notes for 1006 Replication:
+
+#### Logging into HPC
+
+Use the [Prince](https://sites.google.com/a/nyu.edu/nyu-hpc/systems/prince) cluster.
+
+Once your account is active, you can log in to HPC by following [these instructions](https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/hpc-access).
+
+When you've successfully logged into Prince, you will need to connect to your GitHub account.
+This is best done via secure shell (SSH).
+The [Connecting to GitHub with SSH](https://docs.github.com/en/github/authenticating-to-github/connecting-to-github-with-ssh) document should help you get this set up.
+
+After connecting your Prince account to GitHub, clone this project repository to Prince by using the `git clone ...` command.
+
+```
+ssh at2507@gw.hpc.nyu.edu
+ssh at2507@prince.hpc.nyu.edu
+ls -al ~/.ssh
+eval $(ssh-agent -s)
+ssh-add ~/.ssh/id_rsa
+cat ~/.ssh/id_rsa.pub
+
+rm -rf supsup
+git clone git@github.com:DSGA1006-Capstone-Team/supsup.git
+source env/bin/activate
+pip install -r requirements.txt
+
+sbatch supsup_slurm.s
+squeue -u $USER
+git add slurm_lab0_<JOB_ID>.out
+git commit -m "adding log file"
+git push origin master
+
+
+pip install tensorboard
+
+python ./experiments/GG/splitcifar100/rn18-supsup.py --gpu-sets="0" --data="./data" --seeds 1
+
+python ./experiments/GG/splitcifar100/rn18-supsup.py  --data="./data" --seeds 1
+```
+
+#### Local Installation:
+```
+create conda new env
+pip install -r requirements.txt
+```
+
+- tried to run jupyter notebook on prince via https://wikis.nyu.edu/display/NYUHPC/Running+Jupyter+on+Prince but it's not working
+
+
+#### Helpful Prince Resources:
+
+- https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/prince/batch/gpu-jobs
+- https://sites.google.com/a/nyu.edu/nyu-hpc/systems/prince
+- https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/prince/batch/slurm-best-practices#TOC-Is-my-job-scalable-How-efficiently-I-use-multiple-CPUs-GPUs
+- https://docs.computecanada.ca/wiki/Using_GPUs_with_Slurm 

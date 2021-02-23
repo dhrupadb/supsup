@@ -8,7 +8,7 @@ def init(args):
     pass
 
 
-def train(model, writer, train_loader, optimizer, criterion, epoch, task_idx, data_loader=None):
+def train(model, writer, train_loader, optimizer, criterion, epoch, task_idx, data_loader=None, log_alphas=False):
     model.zero_grad()
     model.train()
 
@@ -26,10 +26,18 @@ def train(model, writer, train_loader, optimizer, criterion, epoch, task_idx, da
                 num_samples = batch_idx * len(data)
                 num_epochs = len(train_loader.dataset)
                 percent_complete = 100.0 * batch_idx / len(train_loader)
-                print(
-                    f"Train Epoch: {epoch} [{num_samples}/{num_epochs} ({percent_complete:.0f}%)]\t"
-                    f"Loss: {loss.item():.6f}"
-                )
+                if log_alphas:
+                    alphas = {k: v.tolist() for k,v in model.state_dict().items() if 'basis_alphas.{}'.format(task_idx) in k}
+                    print(
+                        f"Train Epoch: {epoch} [{num_samples}/{num_epochs} ({percent_complete:.0f}%)]\t"
+                        f"Loss: {loss.item():.6f}\t"
+                        f"Alphas: {alphas}"
+                    )
+                else:
+                    print(
+                        f"Train Epoch: {epoch} [{num_samples}/{num_epochs} ({percent_complete:.0f}%)]\t"
+                        f"Loss: {loss.item():.6f}"
+                    )
 
                 t = (len(train_loader) * epoch + batch_idx) * args.batch_size
                 writer.add_scalar(f"train/task_{task_idx}/loss", loss.item(), t)
