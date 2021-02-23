@@ -65,7 +65,67 @@ class GetSubnet(autograd.Function):
         return g, None
 
 
+class GetWeightsNorm(autograd.Function):
+    @staticmethod
+    def forward(ctx, scores, k):
+        # Get the supermask by sorting the scores and using the top k%
+        out = scores.clone().abs()
+
+        # flat_out and out access the same memory.
+        flat_out = out.flatten()
+        # Weight between 0,1
+        flat_out = flat_out/flat_out.max()
+
+        return out
+
+    @staticmethod
+    def backward(ctx, g):
+        # send the gradient g straight-through on the backward pass.
+        return g, None
+
+class GetSignedWeightsNorm(autograd.Function):
+    @staticmethod
+    def forward(ctx, scores, k):
+        # Get the supermask by sorting the scores and using the top k%
+        out = scores.clone()
+        _, idx = scores.flatten().sort()
+        j = int((1 - k) * scores.numel())
+
+        # flat_out and out access the same memory.
+        flat_out = out.flatten()
+        # Weight between -1,1
+        flat_out = flat_out/flat_out.abs().max()
+
+        return out
+
+    @staticmethod
+    def backward(ctx, g):
+        # send the gradient g straight-through on the backward pass.
+        return g, None
+
+
 class GetSubnetSoft(autograd.Function):
+    @staticmethod
+    def forward(ctx, scores, k):
+        # Get the supermask by sorting the scores and using the top k%
+        out = scores.clone().abs()
+        _, idx = scores.flatten().sort()
+        j = int((1 - k) * scores.numel())
+
+        # flat_out and out access the same memory.
+        flat_out = out.flatten()
+        flat_out[idx[:j]] = 0
+        # Weight between 0,1
+        flat_out = flat_out/flat_out.max()
+
+        return out
+
+    @staticmethod
+    def backward(ctx, g):
+        # send the gradient g straight-through on the backward pass.
+        return g, None
+
+class GetSubentSignedSoft(autograd.Function):
     @staticmethod
     def forward(ctx, scores, k):
         # Get the supermask by sorting the scores and using the top k%
@@ -76,8 +136,8 @@ class GetSubnetSoft(autograd.Function):
         # flat_out and out access the same memory.
         flat_out = out.flatten()
         flat_out[idx[:j]] = 0
-        # Disable activation and replace with actual score.
-#        flat_out[idx[j:]] = 1
+        # Weight between -1,1
+        flat_out = flat_out/flat_out.abs().max()
 
         return out
 
@@ -85,7 +145,6 @@ class GetSubnetSoft(autograd.Function):
     def backward(ctx, g):
         # send the gradient g straight-through on the backward pass.
         return g, None
-
 
 class GetSignedSubnet(autograd.Function):
     @staticmethod

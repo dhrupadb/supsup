@@ -109,6 +109,168 @@ class MultitaskMaskConv(nn.Conv2d):
         return f"MultitaskMaskConv({self.in_channels}, {self.out_channels})"
 
 
+class SignedWeightNormMultitaskMaskConv(nn.Conv2d):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.scores = nn.ParameterList(
+            [
+                nn.Parameter(module_util.mask_init(self))
+                for _ in range(pargs.num_tasks)
+            ]
+        )
+        if pargs.train_weight_tasks == 0:
+            self.weight.requires_grad = False
+
+        self.sparsity = pargs.sparsity
+
+    def cache_masks(self):
+        self.register_buffer(
+            "stacked",
+            torch.stack(
+                [
+                    module_util.get_subnet(self.scores[j].abs(), self.sparsity)
+                    for j in range(pargs.num_tasks)
+                ]
+            ),
+        )
+
+    def clear_masks(self):
+        self.register_buffer("stacked", None)
+
+    def forward(self, x):
+        if self.task < 0:
+            alpha_weights = self.alphas[: self.num_tasks_learned]
+            idxs = (alpha_weights > 0).squeeze().view(self.num_tasks_learned)
+            if len(idxs.shape) == 0:
+                idxs = idxs.view(1)
+            subnet = (
+                alpha_weights[idxs]
+                * self.stacked[: self.num_tasks_learned][idxs]
+            ).sum(dim=0)
+        else:
+            subnet = module_util.GetSignedWeightsNorm.apply(
+                self.scores[self.task], self.sparsity
+            )
+        w = self.weight * subnet
+        x = F.conv2d(
+            x, w, self.bias, self.stride, self.padding, self.dilation, self.groups
+        )
+        return x
+
+    def __repr__(self):
+        return f"SignedWeightNormMultitaskMaskConv({self.in_channels}, {self.out_channels})"
+
+
+class WeightNormMultitaskMaskConv(nn.Conv2d):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.scores = nn.ParameterList(
+            [
+                nn.Parameter(module_util.mask_init(self))
+                for _ in range(pargs.num_tasks)
+            ]
+        )
+        if pargs.train_weight_tasks == 0:
+            self.weight.requires_grad = False
+
+        self.sparsity = pargs.sparsity
+
+    def cache_masks(self):
+        self.register_buffer(
+            "stacked",
+            torch.stack(
+                [
+                    module_util.get_subnet(self.scores[j].abs(), self.sparsity)
+                    for j in range(pargs.num_tasks)
+                ]
+            ),
+        )
+
+    def clear_masks(self):
+        self.register_buffer("stacked", None)
+
+    def forward(self, x):
+        if self.task < 0:
+            alpha_weights = self.alphas[: self.num_tasks_learned]
+            idxs = (alpha_weights > 0).squeeze().view(self.num_tasks_learned)
+            if len(idxs.shape) == 0:
+                idxs = idxs.view(1)
+            subnet = (
+                alpha_weights[idxs]
+                * self.stacked[: self.num_tasks_learned][idxs]
+            ).sum(dim=0)
+        else:
+            subnet = module_util.GetWeightsNorm.apply(
+                self.scores[self.task], self.sparsity
+            )
+        w = self.weight * subnet
+        x = F.conv2d(
+            x, w, self.bias, self.stride, self.padding, self.dilation, self.groups
+        )
+        return x
+
+    def __repr__(self):
+        return f"WeightNormMultitaskMaskConv({self.in_channels}, {self.out_channels})"
+
+
+class SignedSoftMultitaskMaskConv(nn.Conv2d):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.scores = nn.ParameterList(
+            [
+                nn.Parameter(module_util.mask_init(self))
+                for _ in range(pargs.num_tasks)
+            ]
+        )
+        if pargs.train_weight_tasks == 0:
+            self.weight.requires_grad = False
+
+        self.sparsity = pargs.sparsity
+
+    def cache_masks(self):
+        self.register_buffer(
+            "stacked",
+            torch.stack(
+                [
+                    module_util.get_subnet(self.scores[j].abs(), self.sparsity)
+                    for j in range(pargs.num_tasks)
+                ]
+            ),
+        )
+
+    def clear_masks(self):
+        self.register_buffer("stacked", None)
+
+    def forward(self, x):
+        if self.task < 0:
+            alpha_weights = self.alphas[: self.num_tasks_learned]
+            idxs = (alpha_weights > 0).squeeze().view(self.num_tasks_learned)
+            if len(idxs.shape) == 0:
+                idxs = idxs.view(1)
+            subnet = (
+                alpha_weights[idxs]
+                * self.stacked[: self.num_tasks_learned][idxs]
+            ).sum(dim=0)
+        else:
+            subnet = module_util.GetSubentSignedSoft.apply(
+                self.scores[self.task], self.sparsity
+            )
+        w = self.weight * subnet
+        x = F.conv2d(
+            x, w, self.bias, self.stride, self.padding, self.dilation, self.groups
+        )
+        return x
+
+    def __repr__(self):
+        return f"SignedSoftMultitaskMaskConv({self.in_channels}, {self.out_channels})"
+
+
 class SoftMultitaskMaskConv(nn.Conv2d):
 
     def __init__(self, *args, **kwargs):
@@ -150,7 +312,6 @@ class SoftMultitaskMaskConv(nn.Conv2d):
                 * self.stacked[: self.num_tasks_learned][idxs]
             ).sum(dim=0)
         else:
-        #TODO(dhrupad): This seems wrong for non-binarized weights..
             subnet = module_util.GetSubnetSoft.apply(
                 self.scores[self.task], self.sparsity
             )
@@ -286,6 +447,215 @@ class BasisMultitaskMaskConv(nn.Conv2d):
         return f"BasisMultitaskMaskConv({self.in_channels}, {self.out_channels})"
 
 
+class SignedWeightNormBasisMultitaskMaskConv(nn.Conv2d):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.scores = nn.ParameterList(
+            [
+                nn.Parameter(module_util.mask_init(self))
+                for _ in range(pargs.num_seed_tasks_learned)
+            ]
+        )
+        for s in self.scores:
+            s.requires_grad = False
+        self.scores.requires_grad = False
+        if pargs.train_weight_tasks == 0:
+            self.weight.requires_grad = False
+
+        if pargs.start_at_optimal:
+            self.basis_alphas = nn.ParameterList(
+                [
+                    nn.Parameter(torch.eye(pargs.num_seed_tasks_learned)[i])
+                    for i in range(pargs.num_seed_tasks_learned)
+                ]
+                +
+                [
+                    nn.Parameter(torch.ones(pargs.num_seed_tasks_learned)/pargs.num_seed_tasks_learned)
+                    for _ in range(pargs.num_seed_tasks_learned, pargs.num_tasks)
+                ]
+            )
+        else:
+            self.basis_alphas = nn.ParameterList(
+                [
+                    nn.Parameter(torch.ones(pargs.num_seed_tasks_learned)/pargs.num_seed_tasks_learned)
+                    for _ in range(pargs.num_tasks)
+                ]
+            )
+        self.sparsity = pargs.sparsity
+
+    def forward(self, x):
+        if pargs.use_single_mask > -1:
+            subnet = module_util.GetSignedWeightsNorm.apply(
+                self.scores[pargs.use_single_mask], self.sparsity
+            )
+            w = self.weight * subnet
+        elif self.task < pargs.num_seed_tasks_learned and not pargs.train_mask_alphas:
+            subnet = module_util.GetSignedWeightsNorm.apply(
+                self.scores[self.task], self.sparsity
+            )
+            w = self.weight * subnet
+        else:
+            subnet = module_util.GetSignedWeightsNorm.apply(
+                self.scores[0], self.sparsity
+            )
+            task_alpha = self.basis_alphas[self.task]
+            w = self.weight * subnet * task_alpha[0]
+            for i in range(1, pargs.num_seed_tasks_learned):
+                subnet = module_util.GetSubnetSoft.apply(
+                    self.scores[i].abs(), self.sparsity
+                )
+                w += self.weight * subnet * task_alpha[i]
+
+        x = F.conv2d(
+            x, w, self.bias, self.stride, self.padding, self.dilation, self.groups
+        )
+        return x
+
+    def __repr__(self):
+        return f"SignedWeightNormBasisMultitaskMaskConv({self.in_channels}, {self.out_channels})"
+
+
+class WeightNormBasisMultitaskMaskConv(nn.Conv2d):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.scores = nn.ParameterList(
+            [
+                nn.Parameter(module_util.mask_init(self))
+                for _ in range(pargs.num_seed_tasks_learned)
+            ]
+        )
+        for s in self.scores:
+            s.requires_grad = False
+        self.scores.requires_grad = False
+        if pargs.train_weight_tasks == 0:
+            self.weight.requires_grad = False
+
+        if pargs.start_at_optimal:
+            self.basis_alphas = nn.ParameterList(
+                [
+                    nn.Parameter(torch.eye(pargs.num_seed_tasks_learned)[i])
+                    for i in range(pargs.num_seed_tasks_learned)
+                ]
+                +
+                [
+                    nn.Parameter(torch.ones(pargs.num_seed_tasks_learned)/pargs.num_seed_tasks_learned)
+                    for _ in range(pargs.num_seed_tasks_learned, pargs.num_tasks)
+                ]
+            )
+        else:
+            self.basis_alphas = nn.ParameterList(
+                [
+                    nn.Parameter(torch.ones(pargs.num_seed_tasks_learned)/pargs.num_seed_tasks_learned)
+                    for _ in range(pargs.num_tasks)
+                ]
+            )
+        self.sparsity = pargs.sparsity
+
+    def forward(self, x):
+        if pargs.use_single_mask > -1:
+            subnet = module_util.GetWeightsNorm.apply(
+                self.scores[pargs.use_single_mask], self.sparsity
+            )
+            w = self.weight * subnet
+        elif self.task < pargs.num_seed_tasks_learned and not pargs.train_mask_alphas:
+            subnet = module_util.GetWeightsNorm.apply(
+                self.scores[self.task], self.sparsity
+            )
+            w = self.weight * subnet
+        else:
+            subnet = module_util.GetWeightsNorm.apply(
+                self.scores[0], self.sparsity
+            )
+            task_alpha = self.basis_alphas[self.task]
+            w = self.weight * subnet * task_alpha[0]
+            for i in range(1, pargs.num_seed_tasks_learned):
+                subnet = module_util.GetSubnetSoft.apply(
+                    self.scores[i].abs(), self.sparsity
+                )
+                w += self.weight * subnet * task_alpha[i]
+
+        x = F.conv2d(
+            x, w, self.bias, self.stride, self.padding, self.dilation, self.groups
+        )
+        return x
+
+    def __repr__(self):
+        return f"WeightNormBasisMultitaskMaskConv({self.in_channels}, {self.out_channels})"
+
+class SignedSoftBasisMultitaskMaskConv(nn.Conv2d):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.scores = nn.ParameterList(
+            [
+                nn.Parameter(module_util.mask_init(self))
+                for _ in range(pargs.num_seed_tasks_learned)
+            ]
+        )
+        for s in self.scores:
+            s.requires_grad = False
+        self.scores.requires_grad = False
+        if pargs.train_weight_tasks == 0:
+            self.weight.requires_grad = False
+
+        if pargs.start_at_optimal:
+            self.basis_alphas = nn.ParameterList(
+                [
+                    nn.Parameter(torch.eye(pargs.num_seed_tasks_learned)[i])
+                    for i in range(pargs.num_seed_tasks_learned)
+                ]
+                +
+                [
+                    nn.Parameter(torch.ones(pargs.num_seed_tasks_learned)/pargs.num_seed_tasks_learned)
+                    for _ in range(pargs.num_seed_tasks_learned, pargs.num_tasks)
+                ]
+            )
+        else:
+            self.basis_alphas = nn.ParameterList(
+                [
+                    nn.Parameter(torch.ones(pargs.num_seed_tasks_learned)/pargs.num_seed_tasks_learned)
+                    for _ in range(pargs.num_tasks)
+                ]
+            )
+        self.sparsity = pargs.sparsity
+
+    def forward(self, x):
+        if pargs.use_single_mask > -1:
+            subnet = module_util.GetSubentSignedSoft.apply(
+                self.scores[pargs.use_single_mask], self.sparsity
+            )
+            w = self.weight * subnet
+        elif self.task < pargs.num_seed_tasks_learned and not pargs.train_mask_alphas:
+            subnet = module_util.GetSubentSignedSoft.apply(
+                self.scores[self.task], self.sparsity
+            )
+            w = self.weight * subnet
+        else:
+            subnet = module_util.GetSubentSignedSoft.apply(
+                self.scores[0], self.sparsity
+            )
+            task_alpha = self.basis_alphas[self.task]
+            w = self.weight * subnet * task_alpha[0]
+            for i in range(1, pargs.num_seed_tasks_learned):
+                subnet = module_util.GetSubnetSoft.apply(
+                    self.scores[i], self.sparsity
+                )
+                w += self.weight * subnet * task_alpha[i]
+
+        x = F.conv2d(
+            x, w, self.bias, self.stride, self.padding, self.dilation, self.groups
+        )
+        return x
+
+    def __repr__(self):
+        return f"SignedSoftBasisMultitaskMaskConv({self.in_channels}, {self.out_channels})"
+
+
 class SoftBasisMultitaskMaskConv(nn.Conv2d):
 
     def __init__(self, *args, **kwargs):
@@ -327,23 +697,23 @@ class SoftBasisMultitaskMaskConv(nn.Conv2d):
     def forward(self, x):
         if pargs.use_single_mask > -1:
             subnet = module_util.GetSubnetSoft.apply(
-                self.scores[pargs.use_single_mask].abs(), self.sparsity
+                self.scores[pargs.use_single_mask], self.sparsity
             )
             w = self.weight * subnet
         elif self.task < pargs.num_seed_tasks_learned and not pargs.train_mask_alphas:
             subnet = module_util.GetSubnetSoft.apply(
-                self.scores[self.task].abs(), self.sparsity
+                self.scores[self.task], self.sparsity
             )
             w = self.weight * subnet
         else:
             subnet = module_util.GetSubnetSoft.apply(
-                self.scores[0].abs(), self.sparsity
+                self.scores[0], self.sparsity
             )
             task_alpha = self.basis_alphas[self.task]
             w = self.weight * subnet * task_alpha[0]
             for i in range(1, pargs.num_seed_tasks_learned):
                 subnet = module_util.GetSubnetSoft.apply(
-                    self.scores[i].abs(), self.sparsity
+                    self.scores[i], self.sparsity
                 )
                 w += self.weight * subnet * task_alpha[i]
 
