@@ -37,6 +37,7 @@ def main():
 
     assert not ((args.num_tasks - args.num_seed_tasks_learned > 1) and (args.conv_type == 'BasisMaskConv')), 'BasisMaskConv only supports learning one extra task over the mask tasks. Please fix config or change conv_type!'
 
+    print(f"Args.num_tasks: {args.num_tasks}")
     if seed_args.seed is not None:
         args.seed = seed_args.seed
         random.seed(int(seed_args.seed))
