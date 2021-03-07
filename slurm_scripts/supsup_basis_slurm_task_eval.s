@@ -2,12 +2,12 @@
 
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=2
-#SBATCH --time=20:00:00
+#SBATCH --time=1:00:00
 #SBATCH --mem=30GB
-#SBATCH --job-name=dsga1006-supsup-basis
+#SBATCH --job-name=supsup-task-eval
 #SBATCH --mail-type=END
 #SBATCH --mail-user=db4045@nyu.edu
-#SBATCH --gres=gpu:k80:1
+#SBATCH --gres=gpu:1
 #SBATCH --output=logs/slurm_supsup_basis_task_eval_test_%j.out
 
 # Refer to https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/prince/batch/submitting-jobs-with-sbatch
@@ -15,16 +15,18 @@
 
 # Remove all unused system modules
 module purge
-module load cuda/10.1.105
-module load anaconda3/5.3.1
+module load cuda/10.2.89
+
+export MYPY_ENV='supsup'
+MYPY_ENV="${MYPY_ENV:-myenv}"
+OVERLAY=$MYPY_ROOT/containers/$MYPY_ENV.ext3
 
 # Move into the directory that contains our code
 SRCDIR=$(pwd)
 
 
 rm -rf /scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupBasis/
-/scratch/db4045/capstone_env/bin/python $SRCDIR/basis.py --data="/scratch/db4045/data" --seed=0 --seed-model="/scratch/db4045/runs/dhrupad_runs_gpu/SupsupSeed/rn18-supsup_num_masks_10/id=supsup~seed=0~sparsity=30~try=0/final.pt" --config $SRCDIR/experiments/basis/splitcifar100/configs/rn18-supsup-basis-multitask.yaml --multigpu="0" --name dhrupad_basis_highsparsity_multimask_test --log-dir=/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupBasis/ --epochs 10
-
+#/home/db4045/.mypy/bin/python $SRCDIR/basis.py --data="/scratch/db4045/data" --seed=0 --seed-model="/scratch/db4045/runs/dhrupad_runs/SupsupSeed/rn18-supsup/id=supsup~seed=0~sparsity=50~try=0/final.pt" --config $SRCDIR/experiments/basis/splitcifar100/configs/rn18-supsup-weightnorm.yaml --multigpu="0" --name dhrupad_supsup_softmask_test --log-dir=/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupBasis/ --epochs 10
 
 #rm -rf /scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupSeed/
 
@@ -67,9 +69,20 @@ rm -rf /scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupBasis/
 
 #/scratch/db4045/capstone_env/bin/python $SRCDIR/main.py --data="/scratch/db4045/data" --seed=0 --log-dir=/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupSeed/ --config $SRCDIR/experiments/seeds/splitcifar100/configs/rn18-supsup_5.yaml --multigpu="0" --epochs 10 --multigpu="0" --sparsity 8 --name dhrupad_seed_mask
 
-echo "Inference using Multimask(basis)"
 #/scratch/db4045/capstone_env/bin/python $SRCDIR/basis.py --data="/scratch/db4045/data" --seed=0 --seed-model="/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupSeed/dhrupad_seed_mask~try=0/final.pt" --config $SRCDIR/experiments/basis/splitcifar100/configs/rn18-supsup-basis-multitask.yaml --multigpu="0" --task-eval 3 --name dhrupad_basis_multimask --log-dir=/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupBasis/
-/scratch/db4045/capstone_env/bin/python $SRCDIR/basis.py --data="/scratch/db4045/data" --seed=0 --seed-model="/scratch/db4045/runs/dhrupad_runs_gpu/SupsupSeed/rn18-supsup_num_masks_3/id=supsup~seed=0~sparsity=32~try=0/final.pt" --config $SRCDIR/experiments/basis/splitcifar100/configs/rn18-supsup-basis-multitask.yaml --multigpu="0" --task-eval 2 --name dhrupad_basis_multimask --log-dir=/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupBasis/
+
+echo "Task Eval Standard (Supsup)"
+/home/db4045/.mypy/bin/python $SRCDIR/basis.py --data="/scratch/db4045/data" --seed=0 --seed-model="/scratch/db4045/runs/dhrupad_runs/SupsupSeed/rn18-supsup/id=supsup~seed=0~sparsity=50~try=0/final.pt" --config $SRCDIR/experiments/basis/splitcifar100/configs/rn18-supsup.yaml --multigpu="0" --name dhrupad_supsup_softmask_test --log-dir=/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupBasis/ --task-eval 2 --num-seed-tasks-learned 5
+
+
+#echo "Task Eval Basis"
+#/home/db4045/.mypy/bin/python $SRCDIR/basis.py --data="/scratch/db4045/data" --seed=0 --seed-model="/scratch/db4045/runs/dhrupad_runs/SupsupSeed/rn18-supsup/id=supsup~seed=0~sparsity=50~try=0/final.pt" --config $SRCDIR/experiments/basis/splitcifar100/configs/rn18-supsup-basis.yaml --multigpu="0" --name dhrupad_supsup_softmask_test --log-dir=/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupBasis/ --task-eval 2 --num-seed-tasks-learned 5
+#
+#echo "Inference using Weight-Normalized(Masks)"
+#/home/db4045/.mypy/bin/python $SRCDIR/basis.py --data="/scratch/db4045/data" --seed=0 --seed-model="/scratch/db4045/runs/dhrupad_runs/SupsupSeed/rn18-supsup/id=supsup~seed=0~sparsity=50~try=0/final.pt" --config $SRCDIR/experiments/basis/splitcifar100/configs/rn18-supsup-weightnorm.yaml --multigpu="0" --name dhrupad_supsup_softmask_test --log-dir=/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupBasis/ --task-eval 2 --num-seed-tasks-learned 5
+
+echo "Inference using Soft(Masks)"
+/home/db4045/.mypy/bin/python $SRCDIR/basis.py --data="/scratch/db4045/data" --seed=0 --seed-model="/scratch/db4045/runs/dhrupad_runs/SupsupSeed/rn18-supsup/id=supsup~seed=0~sparsity=50~try=0/final.pt" --config $SRCDIR/experiments/basis/splitcifar100/configs/rn18-supsup-soft.yaml --multigpu="0" --name dhrupad_supsup_softmask_test --log-dir=/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupBasis/ --task-eval 2 --num-seed-tasks-learned 5
 
 #echo "Inference using SupSup(main)"
 #/scratch/db4045/capstone_env/bin/python $SRCDIR/main.py --data="/scratch/db4045/data" --seed=0 --resume="/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupSeed/dhrupad_seed_mask~try=0/final.pt" --config $SRCDIR/experiments/basis/splitcifar100/configs/rn18-supsup.yaml --multigpu="0" --task-eval 3 --name dhrupad_main_supsup --log-dir=/scratch/db4045/runs/dhrupad_seed_epoch10_single/SupsupBasis/ --sparsity 8 --epochs 0

@@ -100,9 +100,6 @@ def main():
             model_dict.update(pretrained_dict)
             model.load_state_dict(model_dict)
 
-#            model_dict.update(pretrained_dict)
-#            model.load_state_dict(pretrained_dict)
-
             print(f"=> Loaded checkpoint '{args.resume}' (epoch {checkpoint['epoch']})")
         else:
             print(f"=> No checkpoint found at '{args.resume}'")
