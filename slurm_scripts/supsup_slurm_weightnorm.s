@@ -7,6 +7,7 @@
 #SBATCH --job-name=supsup-seed
 #SBATCH --mail-type=END
 #SBATCH --mail-user=db4045@nyu.edu
+#SBATCH --account=cds
 #SBATCH --gres=gpu:1
 #SBATCH --output=logs/slurm_supsup_seed_weightnorm_%j.out
 
@@ -25,6 +26,5 @@ OVERLAY=$MYPY_ROOT/containers/$MYPY_ENV.ext3
 SRCDIR=$(pwd)
 
 
-SPARSITIES=$1
-
-/home/db4045/.mypy/bin/python $SRCDIR/experiments/seeds/splitcifar100/rn18-supsup-weightnorm.py --data="/scratch/db4045/data" --seeds 0,1,2 --logdir-prefix="dhrupad_runs" --gpu-sets="0" --sparsities="$SPARSITIES"
+/home/db4045/.mypy/bin/python $SRCDIR/experiments/seeds/splitcifar100/rn18-supsup-weightnorm.py --data="/scratch/db4045/data" --seeds 0,1,2,3,4,5 --logdir-prefix="dhrupad_runs" --gpu-sets="0"
+#/home/db4045/.mypy/bin/python $SRCDIR/experiments/seeds/splitcifar100/rn18-supsup-weightnorm.py --data="/scratch/db4045/data" --seeds 0 --logdir-prefix="dhrupad_scratch" --gpu-sets="0"

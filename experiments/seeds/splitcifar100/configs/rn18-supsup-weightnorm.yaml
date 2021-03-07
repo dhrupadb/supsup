@@ -15,7 +15,7 @@ conv_type: WeightNormMultitaskMaskConv
 bn_type: MultitaskNonAffineBN
 conv_init: signed_constant
 output_size: 5
-er_sparsity: True
+er_sparsity: False
 sparsity: REPLACE
 
 # Optimizer setup

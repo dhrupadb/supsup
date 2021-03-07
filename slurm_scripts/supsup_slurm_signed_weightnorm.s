@@ -7,8 +7,9 @@
 #SBATCH --job-name=supsup-seed
 #SBATCH --mail-type=END
 #SBATCH --mail-user=db4045@nyu.edu
+#SBATCH --account=cds
 #SBATCH --gres=gpu:1
-#SBATCH --output=logs/slurm_supsup_seed_signedweightnorm_%j.out
+#SBATCH --output=logs/slurm_supsup_seed_signed-weightnorm_%j.out
 
 # Refer to https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/prince/batch/submitting-jobs-with-sbatch
 # for more information about the above options
@@ -24,7 +25,4 @@ OVERLAY=$MYPY_ROOT/containers/$MYPY_ENV.ext3
 # Move into the directory that contains our code
 SRCDIR=$(pwd)
 
-
-SPARSITIES=$1
-
-/home/db4045/.mypy/bin/python $SRCDIR/experiments/seeds/splitcifar100/rn18-supsup-signedweightnorm.py --data="/scratch/db4045/data" --seeds 0,1,2 --logdir-prefix="dhrupad_runs" --gpu-sets="0" --sparsities="$SPARSITIES"
+/home/db4045/.mypy/bin/python $SRCDIR/experiments/seeds/splitcifar100/rn18-supsup-signed-weightnorm.py --data="/scratch/db4045/data" --seeds 0,1,2,3,4,5 --logdir-prefix="dhrupad_runs" --gpu-sets="0"

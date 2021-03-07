@@ -64,48 +64,27 @@ class GetSubnet(autograd.Function):
         # send the gradient g straight-through on the backward pass.
         return g, None
 
-class GetWeightsNormV2(autograd.Function):
-    @staticmethod
-    def forward(ctx, scores):
-        # Get the supermask by sorting the scores and using the top k%
-        out = scores.clone().abs()
-
-        # flat_out and out access the same memory.
-        flat_out = out.flatten()
-        ctx.save_for_backward(flat_out)
-
-        # Weight between 0,1
-        flat_out = flat_out/flat_out.max()
-        return out
-
-    @staticmethod
-    def backward(ctx, g):
-        # send the gradient g straight-through on the backward pass.
-        flat_out, = ctx.saved_tensors
-        ret_g = g/flat_out.max()
-        return ret_g, None
-
 class GetWeightsNorm(autograd.Function):
     @staticmethod
     def forward(ctx, scores):
         # Get the supermask by sorting the scores and using the top k%
         ctx.save_for_backward(scores)
+        assert (scores >= 0).all(), "Scores must be greater than 0 in WeightNormalized subset"
+
         out = scores.clone()
 
         # flat_out and out access the same memory.
         flat_out = out.flatten()
-        flat_out = flat_out + flat_out.min()*-1
 
-        assert flat_out.min() >= 0, 'Tensor should have been re-adjusted to minimum 0'
         # Weight between 0,1
-        flat_out = flat_out/flat_out.max()
-
+        flat_out = flat_out/flat_out.abs().max()
         return out
 
     @staticmethod
     def backward(ctx, g):
         # send the gradient g straight-through on the backward pass.
         scores, = ctx.saved_tensors
+
         ret_g = g/scores.flatten().abs().max()
         return ret_g, None
 

@@ -177,14 +177,12 @@ class WeightNormMultitaskMaskConv(nn.Conv2d):
         if pargs.train_weight_tasks == 0:
             self.weight.requires_grad = False
 
-        self.sparsity = pargs.sparsity
-
     def cache_masks(self):
         self.register_buffer(
             "stacked",
             torch.stack(
                 [
-                    module_util.get_subnet(self.scores[j].abs(), self.sparsity)
+                    module_util.get_subnet(self.scores[j].abs(), 0.0)
                     for j in range(pargs.num_tasks)
                 ]
             ),
@@ -205,7 +203,7 @@ class WeightNormMultitaskMaskConv(nn.Conv2d):
             ).sum(dim=0)
         else:
             subnet = module_util.GetWeightsNorm.apply(
-                self.scores[self.task]
+                self.scores[self.task].abs()
             )
         w = self.weight * subnet
         x = F.conv2d(
@@ -555,26 +553,37 @@ class WeightNormBasisMultitaskMaskConv(nn.Conv2d):
             )
         self.sparsity = pargs.sparsity
 
+    def cache_masks(self):
+        self.register_buffer(
+            "stacked",
+            torch.stack(
+                [
+                    module_util.get_subnet(self.scores[j].abs(), 0.0)
+                    for j in range(pargs.num_tasks)
+                ]
+            ),
+        )
+
     def forward(self, x):
         if pargs.use_single_mask > -1:
             subnet = module_util.GetWeightsNorm.apply(
-                self.scores[pargs.use_single_mask]
+                self.scores[pargs.use_single_mask].abs()
             )
             w = self.weight * subnet
         elif self.task < pargs.num_seed_tasks_learned and not pargs.train_mask_alphas:
             subnet = module_util.GetWeightsNorm.apply(
-                self.scores[self.task]
+                self.scores[self.task].abs()
             )
             w = self.weight * subnet
         else:
             subnet = module_util.GetWeightsNorm.apply(
-                self.scores[0]
+                self.scores[0].abs()
             )
             task_alpha = self.basis_alphas[self.task]
             w = self.weight * subnet * task_alpha[0]
             for i in range(1, pargs.num_seed_tasks_learned):
                 subnet = module_util.GetWeightsNorm.apply(
-                    self.scores[i]
+                    self.scores[i].abs()
                 )
                 w += self.weight * subnet * task_alpha[i]
 

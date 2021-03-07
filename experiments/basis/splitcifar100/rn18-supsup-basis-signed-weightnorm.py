@@ -10,9 +10,10 @@ sys.path.append(os.path.abspath("."))
 
 # note: new algorithm code
 def kwargs_to_cmd(kwargs):
-    cmd = "/ext3/miniconda3/bin/python3 main.py "
+    cmd = "/ext3/miniconda3/bin/python3 basis.py "
     for flag, val in kwargs.items():
         cmd += f"--{flag}={val} "
+    cmd +="--train_mask_alphas"
 
     return cmd
 
@@ -28,8 +29,7 @@ def run_exp(gpu_num, in_queue):
 
         experiment["multigpu"] = gpu_num
         print(f"==> Starting experiment {kwargs_to_cmd(experiment)}")
-        cmd = kwargs_to_cmd(experiment)
-        os.system(cmd)
+        os.system(kwargs_to_cmd(experiment))
 
         with open("output.txt", "a+") as f:
             f.write(
@@ -41,33 +41,36 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu-sets', default=[0], type=lambda x: [a for a in x.split("|") if a])
     parser.add_argument('--seeds', default=[0], type=lambda x: [int(a) for a in x.split(',')])
-    parser.add_argument('--sparsities', type=lambda x: [int(a) for a in x.split(',')], default=[25,30,35,40])
-    parser.add_argument('--data', default='/scratch/db404/data', type=str)
-    parser.add_argument('--epochs', default=250, type=int)
-    parser.add_argument('--logdir-prefix', type=str, required=True)
+    parser.add_argument('--data', default='/scratch/db4045/data', type=str)
+    parser.add_argument('--seed_model_dir', default='/scratch/db4045/seed_models_{num_masks}/id\=supsup~seed\={seed}~try\=0/', type=str)
+    parser.add_argument('--num-masks', default=20, type=int)
+    parser.add_argument('--logdir-prefix', type=str)
+    parser.add_argument('--epochs', type=int, default=150)
+    parser.add_argument('--lr', type=str, default='0.01')
+    parser.add_argument('--batch-size', type=int, default=64)
     args = parser.parse_args()
 
     gpus = args.gpu_sets
     seeds = args.seeds
     data = args.data
+    lr = float(args.lr)
 
-    config = "experiments/seeds/splitcifar100/configs/rn18-supsup-signedweightnorm.yaml"
-    log_dir = "/scratch/{user}/runs/{logdir_prefix}/SupsupSeedSignedWeightnorm/rn18-supsup".format(user=os.environ.get("USER"), logdir_prefix=args.logdir_prefix)
+    config = "experiments/basis/splitcifar100/configs/rn18-supsup-signed-weightnorm.yaml"
+    log_dir = "{scratch}/runs/{logdir_prefix}/SupsupBasisSignedWeightnorm/rn18-supsup_basis_num_masks_{num_masks}".format(num_masks=str(args.num_masks), scratch=os.environ.get("SCRATCH"), logdir_prefix=args.logdir_prefix)
     experiments = []
-#    sparsities = [20, 30, 40, 50, 60, 65, 70, 75, 80, 75, 90, 95] # Higher sparsity values mean more sparse subnetworks
-#    sparsities = [20, 30, 40, 50, 60, 65] # Higher sparsity values mean more sparse subnetworks
-    sparsities = args.sparsities
 
     # at change for 1 epoch to check dir
     for sparsity, seed in product(sparsities, seeds):
         kwargs = {
             "config": config,
-            "name": f"id=supsup~seed={seed}~sparsity={sparsity}",
-            "sparsity": sparsity,
-            "seed": seed,
+            "name": f"id=basis-supsup~seed={seed}~lr={lr}",
             "log-dir": log_dir,
             "epochs": int(args.epochs),
-            "data": data
+            "batch-size": int(args.batch_size),
+            "num-seed-tasks-learned": int(args.num_masks),
+            "lr": lr,
+            "data": data,
+            "seed-model": "{}/final.pt".format(args.seed_model_dir.format(seed=str(seed)))
         }
 
         experiments.append(kwargs)
@@ -80,7 +83,7 @@ def main():
 
     processes = []
     for gpu in gpus:
-        p = Process(target=run_exp, args=(0, queue))
+        p = Process(target=run_exp, args=(gpu, queue))
         p.start()
         processes.append(p)
 
