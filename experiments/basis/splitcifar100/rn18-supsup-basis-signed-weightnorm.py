@@ -60,7 +60,7 @@ def main():
     experiments = []
 
     # at change for 1 epoch to check dir
-    for sparsity, seed in product(sparsities, seeds):
+    for seed in seeds:
         kwargs = {
             "config": config,
             "name": f"id=basis-supsup~seed={seed}~lr={lr}",
