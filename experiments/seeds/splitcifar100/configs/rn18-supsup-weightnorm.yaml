@@ -7,23 +7,23 @@ save: True
 # Dataset setup
 data: /path/to/dataset/parent
 set: RandSplitCIFAR100
-num_tasks: 6
+num_tasks: 20
 
 # Model setup
 model: GEMResNet18
-conv_type: BasisMaskConv
+conv_type: WeightNormMultitaskMaskConv
 bn_type: MultitaskNonAffineBN
 conv_init: signed_constant
 output_size: 5
-er_sparsity: True
+er_sparsity: False
 sparsity: REPLACE
 
 # Optimizer setup
 optimizer: adam
-epochs: 100
-lr: 0.001
-batch_size: 128
-test_batch_size: 128
+epochs: 250
+lr: 0.0003
+batch_size: 64
+test_batch_size: 64
 
 # Adaptation setup
 adaptor: gt

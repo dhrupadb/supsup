@@ -7,7 +7,7 @@ save: True
 # Dataset setup
 data: /path/to/dataset/parent
 set: RandSplitCIFAR100
-num_tasks: 5
+num_tasks: 20
 
 # Model setup
 model: GEMResNet18

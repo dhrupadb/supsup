@@ -258,7 +258,7 @@ class PartitionCIFAR100V2:
 
 
 def partition_datasetv4(dataset, perm):
-    # TODO(dhrupad): Re-enable when not using frozen permutation
+# TODO(dhrupad): Re-enable when not using frozen permutation
 #    lperm = perm.tolist()
     lperm = perm
     newdataset = copy.copy(dataset)
