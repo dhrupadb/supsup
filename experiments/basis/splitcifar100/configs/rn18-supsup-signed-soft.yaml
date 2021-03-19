@@ -11,11 +11,12 @@ num_tasks: 20
 
 # Model setup
 model: GEMResNet18
-conv_type: SignedWeightNormBasisMultitaskMaskConv
+conv_type: SignedSoftBasisMultitaskMaskConv
 bn_type: MultitaskNonAffineBN
 conv_init: signed_constant
 output_size: 5
-er_sparsity: False
+er_sparsity: True
+sparsity: REPLACE
 
 # Optimizer setup
 optimizer: adam

@@ -69,7 +69,7 @@ class GetWeightsNorm(autograd.Function):
     def forward(ctx, scores):
         # Get the supermask by sorting the scores and using the top k%
         ctx.save_for_backward(scores)
-        assert (scores >= 0).all(), "Scores must be greater than 0 in WeightNormalized subset"
+        assert (scores >= 0).all(), "Scores must be greater than 0 in WeightNormalized subnet"
 
         out = scores.clone()
 
@@ -114,7 +114,8 @@ class GetSubnetSoft(autograd.Function):
     @staticmethod
     def forward(ctx, scores, k):
         # Get the supermask by sorting the scores and using the top k%
-        out = scores.clone().abs()
+        assert (scores >= 0).all(), "Scores must be greater than 0 in Soft (Hybrid) subnet"
+        out = scores.clone()
         _, idx = scores.flatten().sort()
         j = int((1 - k) * scores.numel())
 
@@ -122,14 +123,18 @@ class GetSubnetSoft(autograd.Function):
         flat_out = out.flatten()
         flat_out[idx[:j]] = 0
         # Weight between 0,1
-        flat_out = flat_out/flat_out.max()
+        max_abs = flat_out.abs().max()
+        ctx.save_for_backward(max_abs)
+        flat_out = flat_out/max_abs
 
         return out
 
     @staticmethod
     def backward(ctx, g):
         # send the gradient g straight-through on the backward pass.
-        return g, None
+        max_abs, = ctx.saved_tensors
+        ret_g = g/max_abs
+        return ret_g, None
 
 class GetSubentSignedSoft(autograd.Function):
     @staticmethod
@@ -143,14 +148,17 @@ class GetSubentSignedSoft(autograd.Function):
         flat_out = out.flatten()
         flat_out[idx[:j]] = 0
         # Weight between -1,1
-        flat_out = flat_out/flat_out.abs().max()
+        max_abs = flat_out.abs().max()
+        ctx.save_for_backward(max_abs)
+        flat_out = flat_out/max_abs
 
         return out
 
     @staticmethod
     def backward(ctx, g):
-        # send the gradient g straight-through on the backward pass.
-        return g, None
+        max_abs, = ctx.saved_tensors
+        ret_g = g/max_abs
+        return ret_g, None
 
 class GetSignedSubnet(autograd.Function):
     @staticmethod

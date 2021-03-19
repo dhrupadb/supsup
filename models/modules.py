@@ -311,7 +311,7 @@ class SoftMultitaskMaskConv(nn.Conv2d):
             ).sum(dim=0)
         else:
             subnet = module_util.GetSubnetSoft.apply(
-                self.scores[self.task], self.sparsity
+                self.scores[self.task].abs(), self.sparsity
             )
         w = self.weight * subnet
         x = F.conv2d(
@@ -502,7 +502,7 @@ class SignedWeightNormBasisMultitaskMaskConv(nn.Conv2d):
             w = self.weight * subnet * task_alpha[0]
             for i in range(1, pargs.num_seed_tasks_learned):
                 subnet = module_util.GetSignedWeightsNorm.apply(
-                    self.scores[i].abs()
+                    self.scores[i]
                 )
                 w += self.weight * subnet * task_alpha[i]
 
@@ -635,17 +635,17 @@ class SignedSoftBasisMultitaskMaskConv(nn.Conv2d):
 
     def forward(self, x):
         if pargs.use_single_mask > -1:
-            subnet = module_util.GetSubentSignedSoft.apply(
+            subnet = module_util.GetSubnetSignedSoft.apply(
                 self.scores[pargs.use_single_mask], self.sparsity
             )
             w = self.weight * subnet
         elif self.task < pargs.num_seed_tasks_learned and not pargs.train_mask_alphas:
-            subnet = module_util.GetSubentSignedSoft.apply(
+            subnet = module_util.GetSubnetSignedSoft.apply(
                 self.scores[self.task], self.sparsity
             )
             w = self.weight * subnet
         else:
-            subnet = module_util.GetSubentSignedSoft.apply(
+            subnet = module_util.GetSubnetSignedSoft.apply(
                 self.scores[0], self.sparsity
             )
             task_alpha = self.basis_alphas[self.task]
@@ -706,23 +706,23 @@ class SoftBasisMultitaskMaskConv(nn.Conv2d):
     def forward(self, x):
         if pargs.use_single_mask > -1:
             subnet = module_util.GetSubnetSoft.apply(
-                self.scores[pargs.use_single_mask], self.sparsity
+                self.scores[pargs.use_single_mask].abs(), self.sparsity
             )
             w = self.weight * subnet
         elif self.task < pargs.num_seed_tasks_learned and not pargs.train_mask_alphas:
             subnet = module_util.GetSubnetSoft.apply(
-                self.scores[self.task], self.sparsity
+                self.scores[self.task].abs(), self.sparsity
             )
             w = self.weight * subnet
         else:
             subnet = module_util.GetSubnetSoft.apply(
-                self.scores[0], self.sparsity
+                self.scores[0].abs(), self.sparsity
             )
             task_alpha = self.basis_alphas[self.task]
             w = self.weight * subnet * task_alpha[0]
             for i in range(1, pargs.num_seed_tasks_learned):
                 subnet = module_util.GetSubnetSoft.apply(
-                    self.scores[i], self.sparsity
+                    self.scores[i].abs(), self.sparsity
                 )
                 w += self.weight * subnet * task_alpha[i]
 
