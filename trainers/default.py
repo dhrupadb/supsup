@@ -27,7 +27,7 @@ def train(model, writer, train_loader, optimizer, criterion, epoch, task_idx, da
                 num_epochs = len(train_loader.dataset)
                 percent_complete = 100.0 * batch_idx / len(train_loader)
                 if log_alphas:
-                    alphas = {k: v.tolist() for k,v in model.state_dict().items() if 'basis_alphas.{}'.format(task_idx) in k}
+                    alphas_repr = ','.join('{}: {}'.format(ak, av) for ak, av in {k: v.tolist() for k,v in model.state_dict().items() if k.endswith('basis_alphas.{}'.format(task_idx))}.iteritems())
                     print(
                         f"Train Epoch: {epoch} [{num_samples}/{num_epochs} ({percent_complete:.0f}%)]\t"
                         f"Loss: {loss.item():.6f}\t"

@@ -97,9 +97,9 @@ class GetSignedWeightsNorm(autograd.Function):
 
         # flat_out and out access the same memory.
         flat_out = out.flatten()
+
         # Weight between -1,1
         flat_out = flat_out/flat_out.abs().max()
-
         return out
 
     @staticmethod
@@ -136,12 +136,12 @@ class GetSubnetSoft(autograd.Function):
         ret_g = g/max_abs
         return ret_g, None
 
-class GetSubentSignedSoft(autograd.Function):
+class GetSubnetSignedSoft(autograd.Function):
     @staticmethod
     def forward(ctx, scores, k):
         # Get the supermask by sorting the scores and using the top k%
         out = scores.clone()
-        _, idx = scores.flatten().sort()
+        _, idx = scores.abs().flatten().sort()
         j = int((1 - k) * scores.numel())
 
         # flat_out and out access the same memory.
@@ -159,6 +159,7 @@ class GetSubentSignedSoft(autograd.Function):
         max_abs, = ctx.saved_tensors
         ret_g = g/max_abs
         return ret_g, None
+
 
 class GetSignedSubnet(autograd.Function):
     @staticmethod
