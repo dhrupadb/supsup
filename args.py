@@ -23,6 +23,7 @@ def parse_arguments():
     parser.add_argument(
         "--use-single-mask", type=int, help="If runing Basis Conv in single mask mode", default=-1
     )
+
     parser.add_argument(
         "--batch-size",
         type=int,
@@ -70,6 +71,21 @@ def parse_arguments():
         default=0.0001,
         metavar="M",
         help="Weight decay (default: 0.0001)",
+    )
+    parser.add_argument(
+        "--al",
+        type=float,
+        default=0.001,
+        metavar="M",
+        help="Lambda for Alpha regularization (default: 0.001)",
+    )
+
+    parser.add_argument(
+        "--alpha-norm",
+        type=float,
+        default=1.0,
+        metavar="M",
+        help="Type of norm to use for alpha regularization.",
     )
 
     parser.add_argument(
@@ -248,6 +264,10 @@ def parse_arguments():
 
     parser.add_argument(
         "--start_at_optimal", action="store_true", default=False,
+    )
+
+    parser.add_argument(
+        "--log-alphas", action="store_true", default=False,
     )
 
     args = parser.parse_args()

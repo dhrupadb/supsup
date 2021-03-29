@@ -190,7 +190,7 @@ def main():
         # Make a list of the parameters relavent to this task.
         params = []
         for n, p in model.named_parameters():
-            if args.conv_type == 'BasisMultitaskMaskConv':
+            if 'Basis' in args.conv_type:
                 if p.requires_grad and int(n.split('.')[-1]) == idx:
                     params.append(p)
             elif p.requires_grad:
@@ -233,7 +233,8 @@ def main():
                 criterion,
                 epoch,
                 idx,
-                data_loader
+                data_loader,
+                log_alphas=args.log_alphas
             )
 
             # Required for our PSP implementation, not used otherwise.
