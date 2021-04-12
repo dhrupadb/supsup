@@ -38,7 +38,7 @@ def train(model, writer, train_loader, optimizer, criterion, epoch, task_idx, da
                     print(
                         f"Train Epoch: {epoch} [{num_samples}/{num_epochs} ({percent_complete:.0f}%)]\t"
                         f"Loss: {loss.item():.6f}\t"
-                        f"Alphas: {alphas_repr}"
+                        f"Alphas: {alphas_repr}\t"
                     )
                 else:
                     print(

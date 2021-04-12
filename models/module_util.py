@@ -185,6 +185,44 @@ class GetSignedSubnet(autograd.Function):
         return g , None
 
 
+class SignedNormalizeAlpha(autograd.Function):
+    @staticmethod
+    def forward(ctx, alphas):
+        # Normalize the alphas
+        ctx.save_for_backward(alphas)
+        out = alphas.clone()
+        ret = out/alphas.abs.max()
+
+        return ret
+
+    @staticmethod
+    def backward(ctx, g):
+        alphas, = ctx.saved_tensors
+        g = g/alphas.abs().max()
+
+        # send the gradient g straight-through on the backward pass.
+        return g , None
+
+class NormalizeAlpha(autograd.Function):
+    @staticmethod
+    def forward(ctx, alphas):
+        # Normalize the alphas
+        ctx.save_for_backward(alphas)
+        ret = alphas/alphas.abs().max()
+        return ret
+
+    @staticmethod
+    def backward(ctx, g):
+        alphas, = ctx.saved_tensors
+        g = g/alphas.abs().max()
+        return g , None
+
+def norm_alpha(alphas):
+    # Normalize the alphas
+    alphas = torch.relu(alphas)
+    ret = alphas/alphas.max()
+    return ret
+
 def get_subnet(scores, k):
     out = scores.clone()
     _, idx = scores.flatten().sort()
