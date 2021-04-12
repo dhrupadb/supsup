@@ -189,12 +189,16 @@ def main():
 
         # Make a list of the parameters relavent to this task.
         params = []
+        params_names = []
         for n, p in model.named_parameters():
             if 'Basis' in args.conv_type:
                 if p.requires_grad and int(n.split('.')[-1]) == idx:
                     params.append(p)
+                    params_names.append(n)
             elif p.requires_grad:
                 params.append(p)
+
+        print(f"Optimizing over the following params: \n {','.join(params_names)}")
 
         # train_weight_tasks specifies the number of tasks that the weights are trained for.
         # e.g. in SupSup, train_weight_tasks = 0. in BatchE, train_weight_tasks = 1.
@@ -238,7 +242,7 @@ def main():
             )
 
             # Required for our PSP implementation, not used otherwise.
-            utils.cache_weights(model, num_tasks_learned + 1)
+#            utils.cache_weights(model, num_tasks_learned + 1)
 
             curr_acc1[idx] = test(
                 model, writer, criterion, data_loader.val_loader, epoch, idx
