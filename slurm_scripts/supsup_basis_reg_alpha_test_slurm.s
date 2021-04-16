@@ -26,6 +26,11 @@ LR=$1
 WD=$2
 AL=$3
 AN=$4
+# GOOD PARAMS
+#LR=0.005
+#WD=0.01
+#AL=0.005
+#AN=0.85
 echo "Learning Rate: "$LR
 echo "Weight Decay (L2 Adam): "$WD
 echo "Alpha Lambda: "$AL
