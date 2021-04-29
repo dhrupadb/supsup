@@ -8,6 +8,7 @@
 #SBATCH --mail-type=END
 #SBATCH --mail-user=db4045@nyu.edu
 #SBATCH --gres=gpu:1
+#SBATCH --account=cds
 #SBATCH --output=logs/slurm_supsup_seed_%j.out
 
 # Refer to https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/prince/batch/submitting-jobs-with-sbatch
