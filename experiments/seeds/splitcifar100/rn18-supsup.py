@@ -54,8 +54,7 @@ def main():
     config = "experiments/seeds/splitcifar100/configs/rn18-supsup.yaml"
     log_dir = "/scratch/{user}/runs/{logdir_prefix}/SupsupSeed/rn18-supsup".format(user=os.environ.get("USER"), logdir_prefix=args.logdir_prefix)
     experiments = []
-#    sparsities = [20, 30, 40, 50, 60, 65, 70, 75, 80, 75, 90, 95] # Higher sparsity values mean more sparse subnetworks
-#    sparsities = [20, 30, 40, 50, 60, 65] # Higher sparsity values mean more sparse subnetworks
+#    sparsities = [20, 30, 40, 50, 60, 65] # Higher sparsity values mean less sparse subnetworks
     sparsities = args.sparsities
 
     # at change for 1 epoch to check dir
@@ -80,7 +79,7 @@ def main():
 
     processes = []
     for gpu in gpus:
-        p = Process(target=run_exp, args=(0, queue))
+        p = Process(target=run_exp, args=(gpu, queue))
         p.start()
         processes.append(p)
 
