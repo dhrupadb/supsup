@@ -28,5 +28,4 @@ SRCDIR=$(pwd)
 #SPARSITIES='25,30,35'
 SPARSITIES=$1
 
-/home/db4045/.mypy/bin/python $SRCDIR/experiments/seeds/splitcifar100/rn18-supsup.py --data="/scratch/db4045/data" --seeds "1,2" --logdir-prefix="dhrupad_runs" --gpu-sets="0" --sparsities="$SPARSITIES"
-#/home/db4045/.mypy/bin/python $SRCDIR/experiments/seeds/splitcifar100/rn18-supsup.py --data="/scratch/db4045/data" --seeds 0,1,2 --logdir-prefix="dhrupad_runs" --gpu-sets="0" --sparsities="$SPARSITIES"
+/home/db4045/.mypy/bin/python $SRCDIR/experiments/seeds/splitcifar100/rn18-supsup.py --data="/scratch/db4045/data" --seeds 0,1,2,3 --logdir-prefix="runs_final" --gpu-sets="0" --sparsities="$SPARSITIES"
