@@ -18,7 +18,14 @@ def train(model, writer, train_loader, optimizer, criterion, epoch, task_idx, da
 
             optimizer.zero_grad()
             output = model(data)
+
+            task_params_per_layer = {n: p for n,p in model.named_parameters() if n.endswith('basis_alphas.{}'.format(task_idx))}
             loss = criterion(output, target)
+
+            for p in task_params_per_layer.values():
+                l_reg_to_1 = args.al*(torch.pow(torch.norm(p, args.alpha_norm) - 1, 2))
+                loss += l_reg_to_1
+
             loss.backward()
             optimizer.step()
 
@@ -31,7 +38,7 @@ def train(model, writer, train_loader, optimizer, criterion, epoch, task_idx, da
                     print(
                         f"Train Epoch: {epoch} [{num_samples}/{num_epochs} ({percent_complete:.0f}%)]\t"
                         f"Loss: {loss.item():.6f}\t"
-                        f"Alphas: {alphas_repr}"
+                        f"Alphas: {alphas_repr}\t"
                     )
                 else:
                     print(

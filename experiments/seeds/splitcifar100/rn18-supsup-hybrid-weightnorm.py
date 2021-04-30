@@ -51,17 +51,16 @@ def main():
     seeds = args.seeds
     data = args.data
 
-    config = "experiments/seeds/splitcifar100/configs/rn18-supsup.yaml"
-    log_dir = "/scratch/{user}/runs/{logdir_prefix}/SupsupSeed/rn18-supsup".format(user=os.environ.get("USER"), logdir_prefix=args.logdir_prefix)
+    config = "experiments/seeds/splitcifar100/configs/rn18-supsup-hybrid-weightnorm.yaml"
+    log_dir = "/scratch/{user}/runs/{logdir_prefix}/SupsupSeedHybridWeightnorm/rn18-supsup".format(user=os.environ.get("USER"), logdir_prefix=args.logdir_prefix)
     experiments = []
-#    sparsities = [20, 30, 40, 50, 60, 65] # Higher sparsity values mean less sparse subnetworks
     sparsities = args.sparsities
 
     # at change for 1 epoch to check dir
     for sparsity, seed in product(sparsities, seeds):
         kwargs = {
             "config": config,
-            "name": f"id=supsup~seed={seed}~sparsity={sparsity}",
+            "name": f"id=supsup-hybrid-weightnorm~seed={seed}~sparsity={sparsity}",
             "sparsity": sparsity,
             "seed": seed,
             "log-dir": log_dir,
@@ -79,7 +78,7 @@ def main():
 
     processes = []
     for gpu in gpus:
-        p = Process(target=run_exp, args=(gpu, queue))
+        p = Process(target=run_exp, args=(0, queue))
         p.start()
         processes.append(p)
 

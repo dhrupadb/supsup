@@ -11,7 +11,7 @@ num_tasks: 20
 
 # Model setup
 model: GEMResNet18
-conv_type: SignedWeightNormMultitaskMaskConv
+conv_type: SignedWeightNormBasisMultitaskMaskConv
 bn_type: MultitaskNonAffineBN
 conv_init: signed_constant
 output_size: 5

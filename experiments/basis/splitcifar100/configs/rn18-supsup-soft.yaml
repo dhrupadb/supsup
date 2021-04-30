@@ -11,7 +11,7 @@ num_tasks: 20
 
 # Model setup
 model: GEMResNet18
-conv_type: SignedSoftMultitaskMaskConv
+conv_type: SoftBasisMultitaskMaskConv
 bn_type: MultitaskNonAffineBN
 conv_init: signed_constant
 output_size: 5
@@ -22,8 +22,8 @@ sparsity: REPLACE
 optimizer: adam
 epochs: 100
 lr: 0.001
-batch_size: 128
-test_batch_size: 128
+batch_size: 64
+test_batch_size: 64
 
 # Adaptation setup
 adaptor: gt

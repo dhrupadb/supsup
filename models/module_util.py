@@ -69,7 +69,7 @@ class GetWeightsNorm(autograd.Function):
     def forward(ctx, scores):
         # Get the supermask by sorting the scores and using the top k%
         ctx.save_for_backward(scores)
-        assert (scores >= 0).all(), "Scores must be greater than 0 in WeightNormalized subset"
+        assert (scores >= 0).all(), "Scores must be greater than 0 in WeightNormalized subnet"
 
         out = scores.clone()
 
@@ -97,9 +97,9 @@ class GetSignedWeightsNorm(autograd.Function):
 
         # flat_out and out access the same memory.
         flat_out = out.flatten()
+
         # Weight between -1,1
         flat_out = flat_out/flat_out.abs().max()
-
         return out
 
     @staticmethod
@@ -114,27 +114,7 @@ class GetSubnetSoft(autograd.Function):
     @staticmethod
     def forward(ctx, scores, k):
         # Get the supermask by sorting the scores and using the top k%
-        out = scores.clone().abs()
-        _, idx = scores.flatten().sort()
-        j = int((1 - k) * scores.numel())
-
-        # flat_out and out access the same memory.
-        flat_out = out.flatten()
-        flat_out[idx[:j]] = 0
-        # Weight between 0,1
-        flat_out = flat_out/flat_out.max()
-
-        return out
-
-    @staticmethod
-    def backward(ctx, g):
-        # send the gradient g straight-through on the backward pass.
-        return g, None
-
-class GetSubentSignedSoft(autograd.Function):
-    @staticmethod
-    def forward(ctx, scores, k):
-        # Get the supermask by sorting the scores and using the top k%
+        assert (scores >= 0).all(), "Scores must be greater than 0 in Soft (Hybrid) subnet"
         out = scores.clone()
         _, idx = scores.flatten().sort()
         j = int((1 - k) * scores.numel())
@@ -142,15 +122,44 @@ class GetSubentSignedSoft(autograd.Function):
         # flat_out and out access the same memory.
         flat_out = out.flatten()
         flat_out[idx[:j]] = 0
-        # Weight between -1,1
-        flat_out = flat_out/flat_out.abs().max()
+        # Weight between 0,1
+        max_abs = flat_out.abs().max()
+        ctx.save_for_backward(max_abs)
+        flat_out = flat_out/max_abs
 
         return out
 
     @staticmethod
     def backward(ctx, g):
         # send the gradient g straight-through on the backward pass.
-        return g, None
+        max_abs, = ctx.saved_tensors
+        ret_g = g/max_abs
+        return ret_g, None
+
+class GetSubnetSignedSoft(autograd.Function):
+    @staticmethod
+    def forward(ctx, scores, k):
+        # Get the supermask by sorting the scores and using the top k%
+        out = scores.clone()
+        _, idx = scores.abs().flatten().sort()
+        j = int((1 - k) * scores.numel())
+
+        # flat_out and out access the same memory.
+        flat_out = out.flatten()
+        flat_out[idx[:j]] = 0
+        # Weight between -1,1
+        max_abs = flat_out.abs().max()
+        ctx.save_for_backward(max_abs)
+        flat_out = flat_out/max_abs
+
+        return out
+
+    @staticmethod
+    def backward(ctx, g):
+        max_abs, = ctx.saved_tensors
+        ret_g = g/max_abs
+        return ret_g, None
+
 
 class GetSignedSubnet(autograd.Function):
     @staticmethod
@@ -175,6 +184,44 @@ class GetSignedSubnet(autograd.Function):
         # send the gradient g straight-through on the backward pass.
         return g , None
 
+
+class SignedNormalizeAlpha(autograd.Function):
+    @staticmethod
+    def forward(ctx, alphas):
+        # Normalize the alphas
+        ctx.save_for_backward(alphas)
+        out = alphas.clone()
+        ret = out/alphas.abs.max()
+
+        return ret
+
+    @staticmethod
+    def backward(ctx, g):
+        alphas, = ctx.saved_tensors
+        g = g/alphas.abs().max()
+
+        # send the gradient g straight-through on the backward pass.
+        return g , None
+
+class NormalizeAlpha(autograd.Function):
+    @staticmethod
+    def forward(ctx, alphas):
+        # Normalize the alphas
+        ctx.save_for_backward(alphas)
+        ret = alphas/alphas.abs().max()
+        return ret
+
+    @staticmethod
+    def backward(ctx, g):
+        alphas, = ctx.saved_tensors
+        g = g/alphas.abs().max()
+        return g , None
+
+def norm_alpha(alphas):
+    # Normalize the alphas
+    alphas = torch.relu(alphas)
+    ret = alphas/alphas.max()
+    return ret
 
 def get_subnet(scores, k):
     out = scores.clone()
