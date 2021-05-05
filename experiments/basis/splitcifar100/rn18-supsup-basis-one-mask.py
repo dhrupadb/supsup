@@ -45,6 +45,7 @@ def main():
     parser.add_argument('--data', default='/scratch/db4045/data', type=str)
     parser.add_argument('--seed_model_dir', default='/scratch/db4045/seed_models_{num_masks}/id\=supsup~seed\={seed}~sparsity\={sparsity}~try\=0/', type=str)
     parser.add_argument('--num-masks', default=20, type=int)
+    parser.add_argument('--single_mask_only_task', type=int, default=0)
     parser.add_argument('--logdir-prefix', type=str)
     parser.add_argument('--epochs', type=int, default=150)
     parser.add_argument('--lr', type=str, default='0.02')
@@ -57,7 +58,7 @@ def main():
     data = args.data
 
     config = "experiments/basis/splitcifar100/configs/rn18-supsup-basis-multitask.yaml"
-    log_dir = "{scratch}/runs/{logdir_prefix}/SupsupSeedBasis/rn18-supsup_basis_num_masks_{num_masks}".format(num_masks=str(args.num_masks), scratch=os.environ.get("SCRATCH"), logdir_prefix=args.logdir_prefix)
+    log_dir = "{scratch}/runs/{logdir_prefix}/SupsupBasisSingleMask/rn18-supsup_basis_num_masks_{num_masks}".format(num_masks=str(args.num_masks), scratch=os.environ.get("SCRATCH"), logdir_prefix=args.logdir_prefix)
     experiments = []
     sparsities = args.sparsities
 
@@ -65,7 +66,7 @@ def main():
     for sparsity, seed in product(sparsities, seeds):
         kwargs = {
             "config": config,
-            "name": f"id=basis-supsup~seed={seed}~sparsity={sparsity}",
+            "name": f"id=basis-supsup-single-mask~seed={seed}~sparsity={sparsity}",
             "log-dir": log_dir,
             "epochs": int(args.epochs),
             "batch-size": int(args.batch_size),
@@ -75,7 +76,10 @@ def main():
             "seed-model": "{}/final.pt".format(args.seed_model_dir.format(sparsity=str(sparsity), seed=str(seed))),
             "al": args.al,
             "wd": 0.01,
-            "trainer": "alphareg"
+            "seed": seed,
+            "sparsity": sparsity,
+            "trainer": "alphareg",
+            "use-single-mask": args.single_mask_only_task
         }
 
         experiments.append(kwargs)

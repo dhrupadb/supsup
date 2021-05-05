@@ -20,6 +20,11 @@ def parse_arguments():
     parser.add_argument(
         "--seed-model", type=str, help="Path to seed model"
     )
+
+    parser.add_argument(
+        "--seed-model-format", type=str, help="Path format to seed model"
+    )
+
     parser.add_argument(
         "--use-single-mask", type=int, help="If runing Basis Conv in single mask mode", default=-1
     )
@@ -264,6 +269,14 @@ def parse_arguments():
 
     parser.add_argument(
         "--start_at_optimal", action="store_true", default=False,
+    )
+
+    parser.add_argument(
+        "--single_task_only", action="store_true", default=False,
+    )
+
+    parser.add_argument(
+        "--single_task_only_task", default=0, type=int,
     )
 
     parser.add_argument(

@@ -23,7 +23,9 @@ def train(model, writer, train_loader, optimizer, criterion, epoch, task_idx, da
             loss = criterion(output, target)
 
             for p in task_params_per_layer.values():
-                l_reg_to_1 = args.al*(torch.pow(torch.norm(p, args.alpha_norm) - 1, 2))
+#                l_reg_to_1 = args.al*(torch.pow(torch.norm(p, args.alpha_norm) - 1, 2))
+                # Default to L1 norm.
+                l_reg_to_1 = args.al*(torch.pow(torch.norm(p, 1) - 1, 2))
                 loss += l_reg_to_1
 
             loss.backward()
