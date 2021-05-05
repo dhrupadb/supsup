@@ -57,7 +57,7 @@ def main():
     data = args.data
 
     config = "experiments/basis/splitcifar100/configs/rn18-supsup-basis-multitask.yaml"
-    log_dir = "{scratch}/runs/{logdir_prefix}/SupsupSeedBasis/rn18-supsup_basis_num_masks_{num_masks}".format(num_masks=str(args.num_masks), scratch=os.environ.get("SCRATCH"), logdir_prefix=args.logdir_prefix)
+    log_dir = "{scratch}/runs/{logdir_prefix}/SupsupBasis/rn18-supsup_basis_num_masks_{num_masks}".format(num_masks=str(args.num_masks), scratch=os.environ.get("SCRATCH"), logdir_prefix=args.logdir_prefix)
     experiments = []
     sparsities = args.sparsities
 
