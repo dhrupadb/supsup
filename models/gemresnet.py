@@ -41,7 +41,7 @@ class BasicBlock(nn.Module):
 
 
 class RN(nn.Module):
-    def __init__(self, block, num_blocks, num_classes, nf=20):
+    def __init__(self, block, num_blocks, num_classes, nf=20, hybrid=False):
         super(RN, self).__init__()
         self.in_planes = nf
 
@@ -53,7 +53,7 @@ class RN(nn.Module):
         self.layer2 = self._make_layer(block, nf * 2, num_blocks[1], builder, stride=2)
         self.layer3 = self._make_layer(block, nf * 4, num_blocks[2], builder, stride=2)
         self.layer4 = self._make_layer(block, nf * 8, num_blocks[3], builder, stride=2)
-        self.linear = builder.conv1x1(nf * 8 * block.expansion, num_classes, last_layer=True)
+        self.linear = builder.conv1x1(nf * 8 * block.expansion, num_classes, last_layer=True, hybrid_mode=hybrid)
 
     def _make_layer(self, block, planes, num_blocks, builder, stride):
         strides = [stride] + [1] * (num_blocks - 1)
@@ -78,3 +78,6 @@ class RN(nn.Module):
 
 def GEMResNet18():
     return RN(BasicBlock, [2, 2, 2, 2], args.output_size, nf=int(args.width_mult * 20))
+
+def GEMHybridResNet18():
+    return RN(BasicBlock, [2, 2, 2, 2], args.output_size, nf=int(args.width_mult * 20), hybrid=True)

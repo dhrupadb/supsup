@@ -136,6 +136,15 @@ def parse_arguments():
     parser.add_argument(
         "--conv_type", type=str, default="StandardConv", help="Type of conv layer"
     )
+
+    parser.add_argument(
+        "--hybrid_mode", action="store_true", default=False,
+    )
+
+    parser.add_argument(
+        "--hybrid_conv_type", type=str, default="StandardConv", help="Type of hybrid conv layer"
+    )
+
     parser.add_argument(
         "--bn_type", type=str, default="StandardBN", help="Type of batch norm layer."
     )

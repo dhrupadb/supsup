@@ -13,6 +13,9 @@ class Builder(object):
         self.bn_layer = getattr(modules, args.bn_type)
         self.conv_init = getattr(init, args.conv_init)
 
+        if args.hybrid_mode:
+            self.hybrid_conv_layer = getattr(modules, args.hybrid_conv_type)
+
     def activation(self):
         return nn.ReLU(inplace=True)
 
@@ -21,6 +24,7 @@ class Builder(object):
         kernel_size,
         in_planes,
         out_planes,
+        conv_layer,
         stride=1,
         first_layer=False,
         last_layer=False,
@@ -32,11 +36,11 @@ class Builder(object):
                     in_planes, out_planes, kernel_size=1, stride=stride, bias=False
                 )
             else:
-                conv = self.conv_layer(
+                conv = conv_layer(
                     in_planes, out_planes, kernel_size=1, stride=stride, bias=False
                 )
         elif kernel_size == 3:
-            conv = self.conv_layer(
+            conv = conv_layer(
                 in_planes,
                 out_planes,
                 kernel_size=3,
@@ -45,7 +49,7 @@ class Builder(object):
                 bias=False,
             )
         elif kernel_size == 5:
-            conv = self.conv_layer(
+            conv = conv_layer(
                 in_planes,
                 out_planes,
                 kernel_size=5,
@@ -54,7 +58,7 @@ class Builder(object):
                 bias=False,
             )
         elif kernel_size == 7:
-            conv = self.conv_layer(
+            conv = conv_layer(
                 in_planes,
                 out_planes,
                 kernel_size=7,
@@ -71,13 +75,14 @@ class Builder(object):
         return conv
 
     def conv1x1(
-        self, in_planes, out_planes, stride=1, first_layer=False, last_layer=False
+        self, in_planes, out_planes, stride=1, first_layer=False, last_layer=False, hybrid_mode=False
     ):
         """1x1 convolution with padding"""
         c = self.conv(
             1,
             in_planes,
             out_planes,
+            self.conv_layer if not hybrid_mode else self.hybrid_conv_layer,
             stride=stride,
             first_layer=first_layer,
             last_layer=last_layer,
@@ -85,13 +90,14 @@ class Builder(object):
         return c
 
     def conv3x3(
-        self, in_planes, out_planes, stride=1, first_layer=False, last_layer=False
+        self, in_planes, out_planes, stride=1, first_layer=False, last_layer=False, hybrid_mode=False
     ):
         """3x3 convolution with padding"""
         c = self.conv(
             3,
             in_planes,
             out_planes,
+            self.conv_layer if not hybrid_mode else self.hybrid_conv_layer,
             stride=stride,
             first_layer=first_layer,
             last_layer=last_layer,
@@ -99,13 +105,14 @@ class Builder(object):
         return c
 
     def conv5x5(
-        self, in_planes, out_planes, stride=1, first_layer=False, last_layer=False
+        self, in_planes, out_planes, stride=1, first_layer=False, last_layer=False, hybrid_mode=False
     ):
         """5x5 convolution with padding"""
         c = self.conv(
             5,
             in_planes,
             out_planes,
+            self.conv_layer if not hybrid_mode else self.hybrid_conv_layer,
             stride=stride,
             first_layer=first_layer,
             last_layer=last_layer,
@@ -113,13 +120,14 @@ class Builder(object):
         return c
 
     def conv7x7(
-        self, in_planes, out_planes, stride=1, first_layer=False, last_layer=False
+        self, in_planes, out_planes, stride=1, first_layer=False, last_layer=False, hybrid_mode=False
     ):
         """7x7 convolution with padding"""
         c = self.conv(
             7,
             in_planes,
             out_planes,
+            self.conv_layer if not hybrid_mode else self.hybrid_conv_layer,
             stride=stride,
             first_layer=first_layer,
             last_layer=last_layer,
@@ -145,3 +153,4 @@ class Builder(object):
 
     def batchnorm(self, planes):
         return self.bn_layer(planes)
+

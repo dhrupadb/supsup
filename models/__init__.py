@@ -1,6 +1,6 @@
 from models.resnet import ResNet50
 from models.small import LeNet, FC1024, BNNet
-from models.gemresnet import GEMResNet18
+from models.gemresnet import GEMResNet18, GEMHybridResNet18
 
 __all__ = [
     "LeNet",
@@ -8,4 +8,5 @@ __all__ = [
     "BNNet",
     "ResNet50",
     "GEMResNet18",
+    "GEMHybridResNet18",
 ]

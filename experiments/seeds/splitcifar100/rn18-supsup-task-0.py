@@ -10,12 +10,9 @@ sys.path.append(os.path.abspath("."))
 
 # note: new algorithm code
 def kwargs_to_cmd(kwargs):
-    cmd = "/ext3/miniconda3/bin/python3 basis_single_task.py "
+    cmd = "/ext3/miniconda3/bin/python3 main.py "
     for flag, val in kwargs.items():
         cmd += f"--{flag}={val} "
-    cmd +="--train_mask_alphas "
-    cmd +="--single_task_only "
-    cmd +="--hybrid_mode"
 
     return cmd
 
@@ -31,7 +28,8 @@ def run_exp(gpu_num, in_queue):
 
         experiment["multigpu"] = gpu_num
         print(f"==> Starting experiment {kwargs_to_cmd(experiment)}")
-        os.system(kwargs_to_cmd(experiment))
+        cmd = kwargs_to_cmd(experiment)
+        os.system(cmd)
 
         with open("output.txt", "a+") as f:
             f.write(
@@ -44,44 +42,31 @@ def main():
     parser.add_argument('--gpu-sets', default=[0], type=lambda x: [a for a in x.split("|") if a])
     parser.add_argument('--seeds', default=[0], type=lambda x: [int(a) for a in x.split(',')])
     parser.add_argument('--sparsities', type=lambda x: [int(a) for a in x.split(',')], default=[25,30,35,40])
-    parser.add_argument('--data', default='/scratch/db4045/data', type=str)
-    parser.add_argument('--seed_model_dir', default='/scratch/db4045/seed_models_{num_masks}/id\=supsup~seed\={seed}~sparsity\={sparsity}~try\={try}/', type=str)
-    parser.add_argument('--num-masks', default=20, type=int)
-    parser.add_argument('--single_task_only_task', type=int, default=0)
-    parser.add_argument('--logdir-prefix', type=str)
-    parser.add_argument('--epochs', type=int, default=150)
-    parser.add_argument('--lr', type=str, default='0.005')
-    parser.add_argument('--al', type=float, default=0.005)
-    parser.add_argument('--batch-size', type=int, default=64)
+    parser.add_argument('--data', default='/scratch/db404/data', type=str)
+    parser.add_argument('--epochs', default=250, type=int)
+    parser.add_argument('--logdir-prefix', type=str, required=True)
     args = parser.parse_args()
 
     gpus = args.gpu_sets
     seeds = args.seeds
     data = args.data
 
-    config = "experiments/basis/splitcifar100/configs/rn18-supsup-basis-multitask.yaml"
-    log_dir = "{scratch}/runs/{logdir_prefix}/SupsupBasisSingleTask/rn18-supsup_basis_num_masks_{num_masks}".format(num_masks=str(args.num_masks), scratch=os.environ.get("SCRATCH"), logdir_prefix=args.logdir_prefix)
+    config = "experiments/seeds/splitcifar100/configs/rn18-supsup-task-0.yaml"
+    log_dir = "/scratch/{user}/runs/{logdir_prefix}/SupsupSeed/rn18-supsup-task0".format(user=os.environ.get("USER"), logdir_prefix=args.logdir_prefix)
     experiments = []
+#    sparsities = [20, 30, 40, 50, 60, 65] # Higher sparsity values mean less sparse subnetworks
     sparsities = args.sparsities
 
     # at change for 1 epoch to check dir
     for sparsity, seed in product(sparsities, seeds):
         kwargs = {
             "config": config,
-            "name": f"id=basis-supsup-single-task~seed={seed}~sparsity={sparsity}",
+            "name": f"id=supsup~seed={seed}~sparsity={sparsity}",
+            "sparsity": sparsity,
+            "seed": seed,
             "log-dir": log_dir,
             "epochs": int(args.epochs),
-            "batch-size": int(args.batch_size),
-            "num-seed-tasks-learned": int(args.num_masks),
-            "lr": float(args.lr),
-            "data": data,
-            "seed-model-format": "{}/final.pt".format(args.seed_model_dir),
-            "single_task_only_task": args.single_task_only_task,
-            "al": args.al,
-            "wd": 0.01,
-            "seed": seed,
-            "sparsity": sparsity,
-            "trainer": "alphareg"
+            "data": data
         }
 
         experiments.append(kwargs)

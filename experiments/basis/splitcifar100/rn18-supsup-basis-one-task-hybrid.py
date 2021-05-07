@@ -50,7 +50,7 @@ def main():
     parser.add_argument('--single_task_only_task', type=int, default=0)
     parser.add_argument('--logdir-prefix', type=str)
     parser.add_argument('--epochs', type=int, default=150)
-    parser.add_argument('--lr', type=str, default='0.005')
+    parser.add_argument('--lr', type=str, default='0.008')
     parser.add_argument('--al', type=float, default=0.005)
     parser.add_argument('--batch-size', type=int, default=64)
     args = parser.parse_args()
@@ -59,8 +59,8 @@ def main():
     seeds = args.seeds
     data = args.data
 
-    config = "experiments/basis/splitcifar100/configs/rn18-supsup-basis-multitask.yaml"
-    log_dir = "{scratch}/runs/{logdir_prefix}/SupsupBasisSingleTask/rn18-supsup_basis_num_masks_{num_masks}".format(num_masks=str(args.num_masks), scratch=os.environ.get("SCRATCH"), logdir_prefix=args.logdir_prefix)
+    config = "experiments/basis/splitcifar100/configs/rn18-supsup-basis-hybrid-multitask.yaml"
+    log_dir = "{scratch}/runs/{logdir_prefix}/SupsupBasisSingleTaskHybrid/rn18-supsup_basis_num_masks_{num_masks}".format(num_masks=str(args.num_masks), scratch=os.environ.get("SCRATCH"), logdir_prefix=args.logdir_prefix)
     experiments = []
     sparsities = args.sparsities
 
