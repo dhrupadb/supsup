@@ -71,6 +71,7 @@ def main():
     ### Load seed model into trained model:
     model_dict = model.state_dict()
     # Formats: module.conv1.weight or module.conv1.scores.4
+    # also for BatchN: module.layerX.X.conv{1,2} ==> module.layerX.X.bn{1,2}.bns.{running_mean, running_va, num_batches_tracked}
     layer_fmt = ['module.conv1.{}',
                   'module.layer1.0.conv1.{}',
                   'module.layer1.0.conv2.{}',
@@ -97,7 +98,26 @@ def main():
     print('Seed model format: {}'.format(args.seed_model_format))
     # Assert at each level that the backbone network remains unchanged.
     # Iterate and load n models, and update state dict parameter with the params of a given task into this model.
-    for task in range(args.num_seed_tasks_learned):
+    task = 0
+    model_path = args.seed_model_format.format(task=task, sparsity=int(args.sparsity), seed=args.seed)
+    if os.path.isfile(model_path):
+        print(f"=> Loading seed model from '{model_path}'")
+        checkpoint = torch.load(
+            model_path, map_location=f"cuda:{args.multigpu[0]}" if torch.cuda.is_available() else torch.device('cpu')
+        )
+        pretrained_dict = checkpoint["state_dict"]
+        seed_args = checkpoint['args']
+    else:
+        raise RuntimeError(f"=> No seed model found at '{model_path}'!")
+
+    sub_dict = {
+            k: v for k, v in pretrained_dict.items() if k in model_dict
+    }
+    print("Updating following keys: {}".format(','.join(sub_dict.keys())))
+    model_dict.update(sub_dict)
+
+    tlist = [i for i in range(1, args.num_seed_tasks_learned)]
+    for task in tlist:
         model_path = args.seed_model_format.format(task=task, sparsity=int(args.sparsity), seed=args.seed)
         if os.path.isfile(model_path):
             print(f"=> Loading seed model from '{model_path}'")
@@ -109,13 +129,20 @@ def main():
         else:
             raise RuntimeError(f"=> No seed model found at '{model_path}'!")
 
-        assert args.seed == seed_args.seed, "Seeds must be the same for backbone networks to match! Expected seed: {}, found: {}".format(args.seed, seed_args.seed)
+#        assert args.seed == seed_args.seed, "Seeds must be the same for backbone networks to match! Expected seed: {}, found: {}".format(args.seed, seed_args.seed)
         for layer in layer_fmt:
             key = layer.format('weight')
             seed_task_key = layer.format('scores.{}'.format(args.single_task_only_task))
-#                assert (model_dict[key] == pretrained_dict[key]).all(), "Weights must match! Match failed for layer: {}".format(key)
-            model_dict[key] = pretrained_dict[key]
+
+            assert (model_dict[key] == pretrained_dict[key]).all(), "Weights must match! Match failed for layer: {}, task: {}".format(key, task)
+
+            if 'conv' in layer and 'layer' in layer:
+                bn = layer.replace('conv1.{}', 'bn1.bns.{ttask}.{stat}').replace('conv2.{}', 'bn2.bns.{ttask}.{stat}')
+                for stat in ['running_mean', 'running_var', 'num_batches_tracked']:
+                    model_dict[bn.format(ttask=task, stat=stat)] = pretrained_dict[bn.format(ttask=args.single_task_only_task, stat=stat)]
+
             model_dict[layer.format('scores.{}'.format(task))] = pretrained_dict[seed_task_key]
+
             if args.start_at_optimal and args.single_task_only_task == task:
                 model_dict[layer.format('basis_alphas.{}'.format(task))] = model_dict[layer.format('basis_alphas.{}'.format(args.single_task_only_task))]
     model.load_state_dict(model_dict)

@@ -44,7 +44,7 @@ def main():
     parser.add_argument('--root_seed', type=int)
     parser.add_argument('--sparsities', type=lambda x: [int(a) for a in x.split(',')], default=[25,30,35,40])
     parser.add_argument('--data', default='/scratch/db404/data', type=str)
-    parser.add_argument('--epochs', default=100, type=int)
+    parser.add_argument('--epochs', default=250, type=int)
     parser.add_argument('--seed_model_dir', default='/scratch/db4045/seed_models_{num_masks}/id\=supsup~seed\={seed}~sparsity\={sparsity}~try\=0/', type=str)
     parser.add_argument('--logdir-prefix', type=str, required=True)
     args = parser.parse_args()
