@@ -54,7 +54,7 @@ def main():
     data = args.data
 
     config = "experiments/seeds/splitcifar100/configs/rn18-supsup-task-0.yaml"
-    log_dir = "/scratch/{user}/runs/{logdir_prefix}/SupsupSeed/rn18-supsup-task0-{root_seed}".format(user=os.environ.get("USER"), logdir_prefix=args.logdir_prefix, root_seed=args.root_seed)
+    log_dir = "/scratch/{user}/runs/{logdir_prefix}/SupsupSeed/rn18-supsup-task0~root_seed={root_seed}".format(user=os.environ.get("USER"), logdir_prefix=args.logdir_prefix, root_seed=args.root_seed)
     experiments = []
 #    sparsities = [20, 30, 40, 50, 60, 65] # Higher sparsity values mean less sparse subnetworks
     sparsities = args.sparsities
