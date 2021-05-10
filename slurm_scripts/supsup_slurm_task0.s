@@ -2,7 +2,7 @@
 
 #SBATCH --nodes=1
 #SBATCH --cpus-per-task=2
-#SBATCH --time=20:00:00
+#SBATCH --time=32:00:00
 #SBATCH --mem=30GB
 #SBATCH --job-name=supsup-seed-0
 #SBATCH --mail-type=END
