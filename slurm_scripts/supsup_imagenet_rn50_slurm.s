@@ -4,12 +4,12 @@
 #SBATCH --cpus-per-task=2
 #SBATCH --time=70:00:00
 #SBATCH --mem=30GB
-#SBATCH --job-name=supsup-seed-imagenet
+#SBATCH --job-name=supsup-seed-imagenet-rn50
 #SBATCH --mail-type=END
 #SBATCH --mail-user=db4045@nyu.edu
 #SBATCH --gres=gpu:1
 #SBATCH --account=cds
-#SBATCH --output=logs/slurm_supsup_seed_imagenet_%j.out
+#SBATCH --output=logs/slurm_supsup_seed_imagenet_rn50_%j.out
 
 # Refer to https://sites.google.com/a/nyu.edu/nyu-hpc/documentation/prince/batch/submitting-jobs-with-sbatch
 # for more information about the above options
