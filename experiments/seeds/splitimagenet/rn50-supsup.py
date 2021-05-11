@@ -61,7 +61,7 @@ def main():
             "config": config,
             "name": f"id=rn50-supsup~task={task_idx}~sparsity={sparsity}",
             "sparsity": sparsity,
-            "task-eval": task_idx,
+#            "task-eval": task_idx,
             "log-dir": log_dir,
             "epochs": int(args.epochs),
             "data": data,

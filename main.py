@@ -319,7 +319,7 @@ def main():
         # args.eval_ckpts contains values of num_tasks_learned for which testing on all tasks so far is performed.
         # this is done by default when all tasks have been learned, but you can do something like
         # args.eval_ckpts = [5,10] to also do this when 5 tasks are learned, and again when 10 tasks are learned.
-        if num_tasks_learned in args.eval_ckpts or num_tasks_learned == args.num_tasks:
+        if (args.eval_ckpts and num_tasks_learned in args.eval_ckpts) or num_tasks_learned == args.num_tasks:
             avg_acc = 0.0
             avg_correct = 0.0
 
