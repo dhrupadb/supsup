@@ -113,7 +113,7 @@ def main():
     sub_dict = {
             k: v for k, v in pretrained_dict.items() if k in model_dict
     }
-    print("Updating following keys: {}".format(','.join(sub_dict.keys())))
+#    print("Updating following keys: {}".format(','.join(sub_dict.keys())))
     model_dict.update(sub_dict)
 
     tlist = [i for i in range(1, args.num_seed_tasks_learned)]

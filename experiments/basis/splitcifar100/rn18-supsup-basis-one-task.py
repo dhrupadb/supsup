@@ -15,7 +15,6 @@ def kwargs_to_cmd(kwargs):
         cmd += f"--{flag}={val} "
     cmd +="--train_mask_alphas "
     cmd +="--single_task_only "
-    cmd +="--hybrid_mode"
 
     return cmd
 
