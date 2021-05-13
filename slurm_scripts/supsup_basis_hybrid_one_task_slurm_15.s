@@ -25,4 +25,4 @@ SRCDIR=$(pwd)
 SPARSITIES=$1
 SEEDS=$2
 
-/home/db4045/.mypy/bin/python $SRCDIR/experiments/basis/splitcifar100/rn18-supsup-basis-one-task-hybrid.py --data="/scratch/db4045/data" --seeds "$SEEDS" --num-masks=15 --seed_model_dir="/scratch/db4045/runs/runs_final/SupsupSeed/rn18-supsup-task0/id=supsup~seed={seed}~sparsity={sparsity}~try={task}/" --logdir-prefix="runs_final" --epochs 150 --gpu-sets="0" --sparsities="$SPARSITIES" --single_task_only_task 0
+/home/db4045/.mypy/bin/python $SRCDIR/experiments/basis/splitcifar100/rn18-supsup-basis-one-task-hybrid.py --data="/scratch/db4045/data" --seeds "$SEEDS" --num-masks=15 --seed_model_dir="/scratch/db4045/runs/runs_final/SupsupSeed/rn18-supsup-task0~root_seed={seed}/id=supsup~seed={task}~sparsity={sparsity}~try=0/" --logdir-prefix="runs_final" --epochs 150 --gpu-sets="0" --sparsities="$SPARSITIES" --single_task_only_task 0
