@@ -5,7 +5,7 @@ name: resnet18-adam
 
 # Task setup
 set: SplitImageNet
-num_tasks: 100
+num_tasks: 50
 output_size: 10
 #task_eval: -1
 save: True
@@ -20,7 +20,7 @@ lr: 0.001
 lr_policy: cosine_lr
 warmup_length: 5
 wd: 0.01
-batch_size: 256
+batch_size: 512
 
 # Model Setup
 model: ResNet18

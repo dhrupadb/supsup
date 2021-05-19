@@ -32,6 +32,15 @@ class MultitaskNonAffineBN(nn.Module):
     def forward(self, x):
         return self.bns[self.task](x)
 
+class MultitaskNonAffineBNExtended(nn.Module):
+    def __init__(self, dim):
+        super(MultitaskNonAffineBNExtended, self).__init__()
+        self.bns = nn.ModuleList([NonAffineBN(dim) for _ in range(pargs.num_seed_tasks_learned)])
+        self.task = 0
+
+    def forward(self, x):
+        return self.bns[self.task](x)
+
 class MaskConv(nn.Conv2d):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

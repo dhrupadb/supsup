@@ -42,8 +42,8 @@ def main():
     parser.add_argument('--gpu-sets', default=[0], type=lambda x: [a for a in x.split("|") if a])
     parser.add_argument('--seeds', default=[0], type=lambda x: [int(a) for a in x.split(',')])
     parser.add_argument('--sparsities', type=lambda x: [int(a) for a in x.split(',')], default=[25,30,35,40])
-    parser.add_argument('--data', default='/scratch/db404/data', type=str)
-    parser.add_argument('--epochs', default=250, type=int)
+    parser.add_argument('--data', default='/', type=str)
+    parser.add_argument('--epochs', default=50, type=int)
     parser.add_argument('--logdir-prefix', type=str, required=True)
     args = parser.parse_args()
 
@@ -56,15 +56,16 @@ def main():
     experiments = []
     sparsities = args.sparsities
 
-    for sparsity, task_idx in product(sparsities, range(100)):
+    for sparsity, seed in product(sparsities, seeds):
         kwargs = {
             "config": config,
-            "name": f"id=rn50-supsup~task={task_idx}~sparsity={sparsity}",
+            "name": f"id=rn50-supsup-imagenet~seed={seed}~sparsity={sparsity}",
             "sparsity": sparsity,
 #            "task-eval": task_idx,
             "log-dir": log_dir,
             "epochs": int(args.epochs),
             "data": data,
+            "seed": seed,
         }
 
         experiments.append(kwargs)
