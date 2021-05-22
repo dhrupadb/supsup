@@ -7,6 +7,7 @@ import torch.nn.functional as F
 import torchvision
 import numpy as np
 import math
+import random
 
 # Subnetwork forward from hidden networks
 class GetSubnet(autograd.Function):
@@ -281,6 +282,65 @@ class BasisMultitaskFC(nn.Module):
 class MNISTSplit:
     pass
 
+
+class MNISTRot:
+    class rot(object):
+        def __call__(self, img):
+            if self.rotate:
+                return self.rot_func(img)
+            return img
+
+        def __repr__(self):
+            return self.__class__.__name__
+
+    def __init__(self, data_root, seed=0):
+        super(MNISTRot, self).__init__()
+
+        data_root = "mnist"
+        self.seed = seed
+        self.data_root = data_root
+        self.rotator = self.rot()
+        train_dataset = torchvision.datasets.MNIST(
+            data_root,
+            train=True,
+            download=True,
+            transform=torchvision.transforms.Compose(
+                [
+                    self.rotator,
+                    torchvision.transforms.ToTensor(),
+                    torchvision.transforms.Normalize((0.1307,), (0.3081,)),
+                ]
+            ),
+        )
+
+        # Data loading code
+        self.train_loader = torch.utils.data.DataLoader(
+            train_dataset, batch_size=128, shuffle=True
+        )
+        self.val_loader = torch.utils.data.DataLoader(
+            torchvision.datasets.MNIST(
+                data_root,
+                train=False,
+                transform=torchvision.transforms.Compose(
+                     [
+                         self.rotator,
+                         torchvision.transforms.ToTensor(),
+                         torchvision.transforms.Normalize((0.1307,), (0.3081,))
+                     ]
+                 ),
+            ),
+            batch_size=128,
+            shuffle=False,
+        )
+
+    def update_task(self, i):
+        random.seed(i + self.seed)
+        self.rotator.__setattr__("rot_func", torchvision.transforms.RandomRotation(90))
+        self.rotator.__setattr__("rotate", True)
+
+    def unrotate(self):
+        self.rotator.__setattr__("rotate", False)
+
 class MNISTPerm:
     class permute(object):
         def __call__(self, tensor):
@@ -291,12 +351,12 @@ class MNISTPerm:
         def __repr__(self):
             return self.__class__.__name__
 
-    def __init__(self, seed=0):
+    def __init__(self, data_root, seed=0):
         super(MNISTPerm, self).__init__()
 
-        data_root = "mnist"
         self.permuter = self.permute()
         self.seed = seed
+        self.data_root = data_root
         train_dataset = torchvision.datasets.MNIST(
             data_root,
             train=True,

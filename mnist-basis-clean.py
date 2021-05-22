@@ -15,15 +15,16 @@ from mnist import *
 @click.option("--log_dir", help="output log dir", required=True)
 @click.option("--output_dir", help="model output dir", required=True)
 @click.option("--seed_model", help="seed_model_to_use", required=False)
-@click.option("--dataset", help="MNIST Dataset Variant: MNISTPerm vs MNISTSplit", required=True)
+@click.option("--data_root", help="data directory", required=True)
+@click.option("--dataset", help="MNIST Dataset Variant: MNISTPerm vs MNISTRot vs MNISTSplit", required=True)
 @click.option("--epochs", default=2, help="Number of epochs", required=False)
 @click.option("--single_task_mode_task", default=-1, help="To create multiple masks from the same task. -1 to disable.", required=False)
-def run(seed, sparsity, num_tasks, model_type, log_dir, output_dir, single_task_mode_task, dataset, seed_model, epochs, num_seed_tasks_learned):
+def run(seed, sparsity, num_tasks, model_type, log_dir, data_root, output_dir, single_task_mode_task, dataset, seed_model, epochs, num_seed_tasks_learned):
     random.seed(int(seed))
     np.random.seed(int(seed))  # Numpy module.
     torch.manual_seed(int(seed))
 
-    mnist = MNISTPerm(seed=seed) if dataset == 'MNISTPerm' else MNISTSplit(seed=seed)
+    mnist = MNISTPerm(data_root=data_root, seed=seed) if dataset == 'MNISTPerm' else MNISTRot(data_root=data_root, seed=seed) if dataset == 'MNISTRot' else MNISTSplit(data_root=data_root, seed=seed)
     if model_type.lower() == 'supsup' and single_task_mode_task == -1:
         model = MultitaskFC(hidden_size=300, num_tasks=num_tasks, sparsity=sparsity/100)
 
@@ -61,14 +62,16 @@ def run(seed, sparsity, num_tasks, model_type, log_dir, output_dir, single_task_
         for t in range(num_tasks):
             print(f"Task {t}: {gg_performance[t]:.4f}")
 
-        df = pd.DataFrame(data={k: v for k,v in enumerate(gg_performance)}, columns=['Task', 'Performance'])
+        df = pd.Series(gg_performance).reset_index()
+        df.columns = ['Task', 'Performance']
         df['Log dir'] = log_dir
         df['Seed'] = seed
-        exp_out_dir = os.path.join(output_dir, 'supsup-LEnet~seed={}~sparsity={}~num_tasks={}'.format(seed, sparsity, num_tasks))
+        df['Dataset'] = dataset
+        exp_out_dir = os.path.join(output_dir, 'supsup-LEnet~dataset={}/seed={}~sparsity={}~num_tasks={}'.format(dataset, seed, sparsity, num_tasks))
         if not os.path.exists(exp_out_dir):
             os.makedirs(exp_out_dir)
 
-        df.to_csv(os.path.join(exp_out_dir, 'results.csv'))
+        df.to_csv(os.path.join(exp_out_dir, 'results.csv'), index=False)
         torch.save(model, os.path.join(exp_out_dir, 'model.pt'))
 
     elif model_type.lower() == 'supsup' and single_task_mode_task > -1:
@@ -78,7 +81,7 @@ def run(seed, sparsity, num_tasks, model_type, log_dir, output_dir, single_task_
 
         loaders = {}
         for i in range(num_masks_to_create):
-            loaders[i] = MNISTPerm(seed=i)
+            loaders[i] = MNISTPerm(data_root=data_root, seed=i)
 
         weight_dict = {k: v for k,v in model.state_dict().items() if k.endswith('weight')}
 
@@ -111,7 +114,7 @@ def run(seed, sparsity, num_tasks, model_type, log_dir, output_dir, single_task_
             set_num_tasks_learned(modeli, 1)
             print()
 
-            exp_out_dir = os.path.join(output_dir, 'supsup-LEnet-single-task~seed={}~sparsity={}~num_tasks={}'.format(seed, sparsity, num_tasks))
+            exp_out_dir = os.path.join(output_dir, 'supsup-LEnet-single-task~dataset={}/seed={}~sparsity={}~num_tasks={}'.format(dataset, seed, sparsity, num_tasks))
             if not os.path.exists(exp_out_dir):
                 os.makedirs(exp_out_dir)
 
