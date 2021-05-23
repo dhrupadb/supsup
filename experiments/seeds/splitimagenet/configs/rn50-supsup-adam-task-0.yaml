@@ -1,0 +1,37 @@
+# File locations
+data: /
+log_dir: /path/to/logs
+name: resnet50-adam
+
+# Task setup
+set: SplitImageNet
+num_tasks: 2
+output_size: 10
+#task_eval: -1
+save: True
+
+# Task hyperparameters
+epochs: 2
+adapt: False
+
+# Optimizer hyperparams
+optimizer: adam 
+lr: 0.0025
+lr_policy: cosine_lr
+warmup_length: 5
+wd: 0.0
+batch_size: 256
+
+# Model Setup
+model: ResNet50
+#conv_type: MaskConv
+conv_type: MultitaskMaskConv
+#bn_type: NonAffineBN 
+bn_type: MultitaskNonAffineBN
+conv_init: signed_constant
+sparsity: 8
+er_sparsity: True
+eval_ckpts: []
+
+# Hardware Setup
+workers: 20
